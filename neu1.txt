@@ -1,0 +1,5 @@
+<<<<<<< HEAD
+Und das hier wurde auf meinem Laptop geschrieben.
+=======
+Das hier wurde auf Gihub geschrieben.
+>>>>>>> cf098953bd8beb7c0513f127452f0d1e31e880fa
