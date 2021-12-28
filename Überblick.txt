@@ -1,0 +1,44 @@
+
+
+
+Knoten
+	-> benachbarte Knoten, Kante zu den Knoten also (Kante, Knoten)
+	-> eigene Nummer in der Knotenliste - None, falls es sich um einen fixen Knoten handelt.
+	-> Ansetzende Kraft
+	-> resultierende Kraft
+	-> Funktion sich in der Strukturmatrix einzutragen (also (Self.Pos - Nachbar.Pos / |Self.Pos - Nachbar.Pos|) als Eintrag bei der richtigen Kante)
+	-> Pygame Punkt - Farbe hängt von der resultierenden Kraft ab. (Schwarz = keine resultierende Kraft, Grün = es gibt eine resultierende Kraft.)
+	-> Pygame Pfeil - Ein grüner Pfeil, der in die Richtung der resultierenden Kraft zeigt, und eine Länge Proportional zur Kraft hat.
+	
+Kanten
+	-> die zwei verbundenen Knoten (Knoten, Knoten)
+	-> die eigene Nummer in der Kantenliste
+	-> Resultierende Kraft
+	-> Pygame Linie - Farbe hängt von der Kraft ab. (Rot = Druck; Blau = Zug)
+
+Knotenliste (np.array)
+	-> (Nummer, Knoten)
+
+Knotenkräfte (np.array)
+	-> ((2 o. 3) * Nummer, Kraft(x, y, z))
+Kantenliste (np.array)
+	-> (Nummer, Kante)
+
+Kantenkräfte (np.array)
+	-> (Nummer, Kraft)
+
+Strukturmatrix (np.matrix?)
+	-> [Kantenkräfte * Strukturmatrix = Knotenkräfte]
+
+Inverse Strukturmatrix
+	-> wir verwenden die Moore-Penrose-Inverse
+
+
+Workflow:
+	-> Setze Knoten und Kanten
+	-> Erstelle die Strukturmatrix
+	-> Berechne die Inverse
+	-> Berechne aus der Inversen und den ansetzenden Knotenkräften die resultierenden Kantenkräfte
+	-> Berechne wieder Rückwärtig mit der Strukturmatrix die resultierenden Knotenkräfte (ansetzende Kraft + Kantenkräfte * Stukturmatrix) - runde bei beträgen nahe Null ab.
+
+
