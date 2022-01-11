@@ -29,6 +29,10 @@ Kantenkräfte (np.array)
 
 Strukturmatrix (np.matrix?)
 	-> [Kantenkräfte * Strukturmatrix = Knotenkräfte]
+	-> Wir verwenden eine sparse-matix im csc-Format. Der Aufbau der verschiedenen Matrixarten ist hier erklärt: https://wikigerman.edu.vn/wiki6/sparse-matrix-wikipedia/
+		Ein Test, ob sich csc-Matrizen tatsächlich schneller Spaltenweise zusammenhängen lassen zeigt, dass hier im Falle von 3*3 csc Matrizen ca. 4-mal schneller sind als csr-Matrizen.
+		Für das Anhängen einer einzelnen Spalte ergab sich für eine Spalte mit 3 Einträgen ca. die doppelte, und für 6 Einträge ca. 2,5-fache Laufzeit.
+		(Es wurde jeweils 10000 mal iteriert die Matrix um die neue Spaltekomponente erweitert.)
 
 Inverse Strukturmatrix
 	-> wir verwenden die Moore-Penrose-Inverse

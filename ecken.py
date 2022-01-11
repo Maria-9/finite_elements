@@ -7,6 +7,7 @@ sys.path.insert(1, 'C:\\Users\\Sebastian Hahn\\AppData\\Roaming\\Notepad++\\plug
 
 import numpy as np
 from messagebox import msg
+import scipy.sparse as ss
 
 
 class nummeriert:
@@ -143,22 +144,62 @@ class kante(nummeriert):
     def __str__(self):
         return (super().__str__()
                 + "\n Ecken: [" + str(self.ecke1.nummer) + ", " + str(self.ecke2.nummer) + "]")
+                
+
+class statik:
+    
+    def __init__(self, dim = 2, ecken_ans = np.array(0), ecken_res = np.array(0), kanten_res = np.array(0)):
+        self.dim = dim                          # die Dimension in der sich die Statik bewegt.
+        self.ecken_ans = ecken_ans              # die an den Eckpunkten ansetzenden Kräfte e_a
+        self.ecken_res = ecken_res              # die an den Eckpunkten resultierenden Kräfte nach der berechnung e_r = e_a + S * k_r
+        self.kanten_res = kanten_res            # die an den Kanten resultierenden Kräfte k_r = S^(-1) * e_a
+        self.struktur_matrix = ss.csc_matrix((dim * 2, length(kanten_ans)))      # die Strukturmatrix - für jede Kante gibt es dim * 2 Einträge für die Ecken.
+        
+    def neue_kante(self, kante):
+        pass
+        
+    def aktualisiere_kante(self, kante):
+        pass
+    
+    def entferne_kante(self, kante):
+        pass
+    
+    def setze_ans_kraft(self, ecke):
+        pass
+    
+    def gib_res_kraft(self, object_mit_res_kraft):
+        pass
+    
+    
     
     
     
 if __name__ == "__main__":
     msg.state("Start")
-    c = dynamische_ecke(tuple([2, 2]), 4)
-    print(c)
-    e = dynamische_ecke(tuple([2, 3]), 4)
-    print(e)
-    d = dynamische_ecke(tuple([2, 4]), 4)
-    print(d)
-    k = kante(c, d)
-    l = kante(e, d)
-    print(l)
-    l.auflösen()
-    l = kante(c, e)
-    print(k)
-    print(l)
-    print(l.ecke2)
+    stat = statik()
+    print(stat.ecken_ans)
+    print(stat.ecken_res)
+    print(stat.kanten_res)
+    print(stat.struktur_matrix.toarray())
+    
+    
+    
+    # c = dynamische_ecke(tuple([2, 2]), 4)
+    # print(c)
+    # e = dynamische_ecke(tuple([2, 3]), 4)
+    # print(e)
+    # d = dynamische_ecke(tuple([2, 4]), 4)
+    # print(d)
+    # k = kante(c, d)
+    # l = kante(e, d)
+    # print(l)
+    # l.auflösen()
+    # l = kante(c, e)
+    # print(k)
+    # print(l)
+    # print(l.ecke2)
+    
+    
+    
+    
+    
