@@ -148,14 +148,15 @@ class kante(nummeriert):
 
 class statik:
     
-    def __init__(self, dim = 2, ecken_ans = np.array(0), ecken_res = np.array(0), kanten_res = np.array(0)):
+    def __init__(self, dim = 2, ecken_ans = np.array([0]), ecken_res = np.array([0]), kanten_res = np.array([0])):
         self.dim = dim                          # die Dimension in der sich die Statik bewegt.
         self.ecken_ans = ecken_ans              # die an den Eckpunkten ansetzenden Kräfte e_a
         self.ecken_res = ecken_res              # die an den Eckpunkten resultierenden Kräfte nach der berechnung e_r = e_a + S * k_r
         self.kanten_res = kanten_res            # die an den Kanten resultierenden Kräfte k_r = S^(-1) * e_a
-        self.struktur_matrix = ss.csc_matrix((dim * 2, length(kanten_ans)))      # die Strukturmatrix - für jede Kante gibt es dim * 2 Einträge für die Ecken.
+        self.struktur_matrix = row_limited_csc(([0], [0], [0,0]), dtype=float)      # die Strukturmatrix.
         
     def neue_kante(self, kante):
+        #self.strukturmatrix = hstack(self.struktur_matrix, kante.)
         pass
         
     def aktualisiere_kante(self, kante):
@@ -171,6 +172,129 @@ class statik:
         pass
     
     
+class row_limited_csc(ss.csc_matrix):
+    
+    def __init__(self, arg1, num_rows=None, dtype=None, copy=False):
+            
+        ss.csc_matrix.__init__(self, arg1, dtype=dtype, copy=copy)
+        
+        # Find the maximum number of entries per column and store it in self.num_rows
+        self.num_rows = 0
+        prev_ptr = 0
+        for ptr in self.indptr:
+            self.num_rows = max(self.num_rows, ptr - prev_ptr)
+            prev_ptr = ptr
+        
+        # Check the number of allowed rows: num_rows
+        if num_rows != None:
+            if self.num_rows > num_rows:
+                msg.error("In der CSC-Matrix sind mehr Einträge pro Spalte (" + self.num_rows + ") enthalten, als num_rows = " + str(num_rows) + " erlaubt.")
+            else:
+                self.num_rows = num_rows
+        
+        # correct the format of the matrix.
+        
+        new_data = []
+        new_indices = []
+        new_indptr = []
+        
+        prev_ptr = 0
+        for ptr in self.indptr:
+            if ptr == 0:
+                continue
+            new_data.extend(self.data[prev_ptr : ptr])
+            new_data.extend([0 for i in range(self.num_rows - (ptr - prev_ptr))])
+            
+            
+            new_indices.extend(self.indices[prev_ptr : ptr])
+            #new_indizes.extend([i for i in set(range(num_rows))...])
+                # Es sollen die Indizes von unten aufgefüllt werden, jedoch nicht die aus self.indizes[prev_ptr : ptr] doppelt vorkommen.
+            
+        
+        
+
+        # data, indizes, inptr sollten am Ende numpy arrays sein.
+        self._shape = (1, 1) # Correct this!
+            
+
+        # elif isinstance(arg1, tuple):
+            # if isshape(arg1):
+                # # It's a tuple of matrix dimensions (M, N)
+                # # create empty matrix
+                # self._shape = check_shape(arg1)
+                # M, N = self.shape
+                # # Select index dtype large enough to pass array and
+                # # scalar parameters to sparsetools
+                # idx_dtype = get_index_dtype(maxval=max(M, N))
+                # self.data = np.zeros(0, getdtype(dtype, default=float))
+                # self.indices = np.zeros(0, idx_dtype)
+                # self.indptr = np.zeros(self._swap((M, N))[0] + 1,
+                                       # dtype=idx_dtype)
+            # else:
+                # if len(arg1) == 2:
+                    # # (data, ij) format
+                    # other = self.__class__(
+                        # self._coo_container(arg1, shape=shape, dtype=dtype)
+                    # )
+                    # self._set_self(other)
+                # elif len(arg1) == 3:
+                    # # (data, indices, indptr) format
+                    # (data, indices, indptr) = arg1
+
+                    # # Select index dtype large enough to pass array and
+                    # # scalar parameters to sparsetools
+                    # maxval = None
+                    # if shape is not None:
+                        # maxval = max(shape)
+                    # idx_dtype = get_index_dtype((indices, indptr),
+                                                # maxval=maxval,
+                                                # check_contents=True)
+
+                    # self.indices = np.array(indices, copy=copy,
+                                            # dtype=idx_dtype)
+                    # self.indptr = np.array(indptr, copy=copy, dtype=idx_dtype)
+                    # self.data = np.array(data, copy=copy, dtype=dtype)
+                # else:
+                    # raise ValueError("unrecognized {}_matrix "
+                                     # "constructor usage".format(self.format))
+
+        # else:
+            # # must be dense
+            # try:
+                # arg1 = np.asarray(arg1)
+            # except Exception as e:
+                # raise ValueError("unrecognized {}_matrix constructor usage"
+                                 # "".format(self.format)) from e
+            # self._set_self(self.__class__(
+                # self._coo_container(arg1, dtype=dtype)
+            # ))
+
+        # # Read matrix dimensions given, if any
+        # if shape is not None:
+            # self._shape = check_shape(shape)
+        # else:
+            # if self.shape is None:
+                # # shape not already set, try to infer dimensions
+                # try:
+                    # major_dim = len(self.indptr) - 1
+                    # minor_dim = self.indices.max() + 1
+                # except Exception as e:
+                    # raise ValueError('unable to infer matrix dimensions') from e
+                # else:
+                    # self._shape = check_shape(self._swap((major_dim,
+                                                          # minor_dim)))
+
+        # if dtype is not None:
+            # self.data = self.data.astype(dtype, copy=False)
+
+        # self.check_format(full_check=False)
+
+
+    def append_col(self, column):
+            
+        pass
+            
+    
     
     
     
@@ -182,6 +306,10 @@ if __name__ == "__main__":
     print(stat.kanten_res)
     print(stat.struktur_matrix.toarray())
     
+    # (data, indices, indptr)
+    m = ss.csc_matrix(([1, 2, 3, 4, 5, 6, 7, 8, 9],[0, 4, 8, 0, 4, 8, 0, 4, 8],[0, 2, 4, 6, 8, 9]))
+    print(m.toarray())
+    print(m.shape)
     
     
     # c = dynamische_ecke(tuple([2, 2]), 4)
