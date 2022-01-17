@@ -39,10 +39,34 @@ Inverse Strukturmatrix
 
 
 Workflow:
+	-> Einrichten des Editors
+	-> Meilenstein 0
 	-> Setze Knoten und Kanten
 	-> Erstelle die Strukturmatrix
-	-> Berechne die Inverse
-	-> Berechne aus der Inversen und den ansetzenden Knotenkräften die resultierenden Kantenkräfte
+	-> Berechne iterativ aus den ansetzenden Knotenkräften die resultierenden Kantenkräfte
 	-> Berechne wieder Rückwärtig mit der Strukturmatrix die resultierenden Knotenkräfte (ansetzende Kraft + Kantenkräfte * Stukturmatrix) - runde bei beträgen nahe Null ab.
+	-> Zeichne des mit Pygame auf eine Oberfläche
+	-> Simuliere eine Wage / ein Tor / einen Überhang
+	-> Meilenstein 1
+	-> Finde die Zusammenhangskomponenten
+	-> Finde die Drehpunkte / Die Drehachsen
+	-> Finde heraus, ob sich Trägheitstensoren multiplizieren
+	-> Berechne die Trägheitstensoren(einmal für die Zusammenhangskomponenten, und einmal für die aktuellen Drehpunkte.)
+	-> Berechne über die Momente die Drehbeschleunigung der Zusammenhangskomponente.
+	-> Verwende zur Zhgs-k. relative Koordinaten der Ecken.
+	-> Simuliere eine kippende Wage
+	-> Meilenstein 2
+	-> Setze die platonischen Grundbausteine
+	-> erstelle Kanten bei jeder Kollision / Berührung.		(man denke an die neuen Zhgs-k.)
+	-> löse Kanten bei passenden Zugkräften auf - löse auch die gekoppelten Verbindungen dann auf. (man denke an die neuen Zhgs-k.)
+	-> man verwende eine geeignete Rechenmethode um Impulserhaltung zu gewährleisten.
+		-> hierfür bietet dich die verdoppelte Anwendung der Kantenkraft zwischen den Objekten an.
+	-> man überlege sich, wie Reibung implementiert werden kann. - dies ist mit dem Kollisionsvorgang zu vereinigen.
+	-> Simuliere eine Wage über die ein Ball schnellt, ein rundes Viadukt und eine Seilbrücke über die eine Figur rutscht, einen abbrechenden Überhang, der am Hang herabschnellt und zerberstet.
+	-> Meilenstein 3
+	
+		-> Wasser Feuer Luft
+	oder	
+		-> Jump & Run
 
 
