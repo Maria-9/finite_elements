@@ -89,7 +89,8 @@ class dynamische_ecke(ecke):
     
     _kind = "dynamisch"
     
-    def __init__(self, position, masse):
+    def __init__(self, position, masse, statik=None):
+        #TODO: dynamische ecken tragen sich in der statik ein.
         self.masse = masse
         self.ansetzende_kraft = 0
         self.resultierende_kraft = 0
@@ -104,7 +105,8 @@ class dynamische_ecke(ecke):
     
 
 class statische_ecke(ecke):
-    
+    # statische Ecken tragen sich nicht in der statik ein.
+    # statische Ecken dienen lediglich als Fixpunkte.
     _kind = "statisch"
     
     def __init__(self, position):
@@ -115,7 +117,8 @@ class kante(nummeriert):
 
     _kind = "Kante"
     
-    def __init__(self, ecke1, ecke2):
+    def __init__(self, ecke1, ecke2, statik=None):
+        # TODO: die Kante trägt sich in der statik ein.
         self.ecke1 = ecke1
         self.ecke2 = ecke2
         
@@ -153,10 +156,10 @@ class statik:
         self.ecken_ans = ecken_ans              # die an den Eckpunkten ansetzenden Kräfte e_a
         self.ecken_res = ecken_res              # die an den Eckpunkten resultierenden Kräfte nach der berechnung e_r = e_a + S * k_r
         self.kanten_res = kanten_res            # die an den Kanten resultierenden Kräfte k_r = S^(-1) * e_a
-        self.struktur_matrix = row_limited_csc(([0], [0], [0,1]), dtype=float)      # die Strukturmatrix.
+        self.struktur_matrix = row_limited_csc(([0], [0], [0,1]), num_rows=2*dim, dtype=float)      # die Strukturmatrix.
         
     def neue_kante(self, kante):
-        #self.strukturmatrix = hstack(self.struktur_matrix, kante.)
+        
         pass
         
     def aktualisiere_kante(self, kante):
@@ -175,13 +178,16 @@ class statik:
     
 class row_limited_csc(ss.csc_matrix):
     
-    def __init__(self, arg1, num_rows=None, dtype=None, copy=False):
+    def __init__(self, arg1, num_rows=None, shape=None, dtype=None, copy=False):
+        
+        # das Argument shape wird benötigt, da ein Konstruktor für eine csc_matrix stets diesen Parameter nimmt. Würde er fehlen, könnte scipy nicht regelkonform
+        # mit dieser Klasse rechnen können. Der Parameter erfüllt hier jedoch keinen weiteren Sinn.
         
         # @docstring:
         # Die angegebene Matrix wird vergrößert, falls sie weniger Zeilen enthält als angegeben.
         # Sie wird niemals verkleinert.
           
-        ss.csc_matrix.__init__(self, arg1, dtype=dtype, copy=copy)
+        ss.csc_matrix.__init__(self, arg1, dtype=dtype, shape=shape, copy=copy)
         
         # Find the maximum number of entries per column and store it in self.num_rows
         self.num_rows = 0
@@ -280,9 +286,6 @@ class row_limited_csc(ss.csc_matrix):
             self.data = np.concatenate([self.data, data])
             self.indices = np.concatenate([self.indices, indices])
             self.indptr = np.concatenate([self.indptr, indptr[1:] + self.indptr[-1]])
-            print(self.data)
-            print(self.indices)
-            print(self.indptr)
             
             # Setze die Korrekte Form
             maximum = max(indices)
@@ -302,14 +305,60 @@ class row_limited_csc(ss.csc_matrix):
     def append_csc(self, csc_matrix, fast=False):
         # Use this for row_limited_csc matrices.
         
-        if fast or type(csc_matrix) == row_limited_csc:
-            self._set_self(ss.hstack([self, m]))
+        if not fast:
+            self._set_self(ss.hstack([self, row_limited_csc(csc_matrix, num_rows=self.num_rows)]))
         else:
-            self.append((csc_matrix.indptr, csc_matrix.indices, csc_matrix.data), fast=fast)
+            self.append((csc_matrix.data, csc_matrix.indices, csc_matrix.indptr), fast=True)
+    
+    def __time_append():
+        
+        # Das Ergebnis dieses Skriptes besagt, stets die schnellen Varianten zu verwenden. 
+        # Für genauere Untersuchungen scheint die time-Methode nicht brauchbar. Evtl. könnte man dies umschreiben auf timeit?
+        #
+        
+        mat = ([1, 2, 3, 4, 5, 6, 7, 8, 9],[0, 2, 4, 0, 2, 1, 3, 5, 4],[0, 1, 1, 2, 8, 9])
+        vec = ([7, 7, 7, 9, 8, 9], [0, 1, 2, 3, 4, 5], [0, 6])
+        npvec = (np.array(vec[0]), np.array(vec[1]), np.array(vec[2]))
+        
+        m = row_limited_csc(mat)
+        o = m.copy()
+        p = m.copy()
+        q = m.copy()
+        
+        n = 3000
+        
+        end = np.zeros((4, 10), float)
+        for j in range(10):
+        
+            start = time()
+            for i in range(n):
+                m.append(vec, fast=True)
+            end[0][j] = time() - start
+            
+            start = time()
+            for i in range(n):
+                q.append(vec, fast=False)
+            end[1][j] = time() - start
+            
+            vec_csc = ss.csc_matrix(vec)
+            start = time()
+            for i in range(n):
+                o.append_csc(ss.csc_matrix(vec), fast=True)
+            end[2][j] = time() - start
+            
+            #vec_csc = ss.csc_matrix(vec)
+            start = time()
+            for i in range(n):
+                p.append_csc(ss.csc_matrix(vec), fast=False)
+            end[3][j] = time() - start
+            
+            print(j)
+        print(end)
 
  
     def override(self, vector, column):
         # Diese Funktion überschreibt die angegebene Spalte
+        # Ist der angegebene Vector ungültig wird ein ValueError wegen gescheitertem Broadcasting geworfen.
         # Diese Funktion kann ebenfalls eine schnelle Version erhalten, in der nicht mit Nullen aufgefüllt wird.
         
         (data, indices) = vector
@@ -333,6 +382,7 @@ class row_limited_csc(ss.csc_matrix):
     
     
 if __name__ == "__main__":
+    from time import time
     msg.state("Start")
     stat = statik()
     #print(stat.ecken_ans)
@@ -341,37 +391,13 @@ if __name__ == "__main__":
     #print(stat.struktur_matrix.toarray())
     
     # (data, indices, indptr)
-    mat = ([1, 2, 3, 4, 5, 6, 7, 8, 9],[0, 2, 4, 0, 2, 1, 3, 5, 4],[0, 1, 1, 2, 8, 9])
-    m = row_limited_csc(mat)
-    print(m.data)
-    print(m.indices)
-    print(m.indptr)
-    print(m.toarray())
-    print(m.shape)
     
-    n = ss.csc_matrix(mat)
-    print(n.toarray())
-    print(n.shape)
     
-    #m.append(mat, fast=True)
-    m.append(([7, 7, 7, 9, 8, 9], [0, 1, 2, 3, 4, 5], [0, 6]), fast=True)
-    m.override(([3, 3, 3, 3], [0, 1, 2, 3]), 3)
-    print(m.toarray())
     
-    # c = dynamische_ecke(tuple([2, 2]), 4)
-    # print(c)
-    # e = dynamische_ecke(tuple([2, 3]), 4)
-    # print(e)
-    # d = dynamische_ecke(tuple([2, 4]), 4)
-    # print(d)
-    # k = kante(c, d)
-    # l = kante(e, d)
-    # print(l)
-    # l.auflösen()
-    # l = kante(c, e)
-    # print(k)
-    # print(l)
-    # print(l.ecke2)
+    
+        
+    #m.override(([3, 3, 3, 3, 3, 3], [0, 1, 2, 3, 4, 5]), 3)
+    #print(m.toarray())
     
     
     
