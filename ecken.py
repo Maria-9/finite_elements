@@ -153,7 +153,7 @@ class statik:
         self.ecken_ans = ecken_ans              # die an den Eckpunkten ansetzenden Kräfte e_a
         self.ecken_res = ecken_res              # die an den Eckpunkten resultierenden Kräfte nach der berechnung e_r = e_a + S * k_r
         self.kanten_res = kanten_res            # die an den Kanten resultierenden Kräfte k_r = S^(-1) * e_a
-        self.struktur_matrix = row_limited_csc(([0], [0], [0,0]), dtype=float)      # die Strukturmatrix.
+        self.struktur_matrix = row_limited_csc(([0], [0], [0,1]), dtype=float)      # die Strukturmatrix.
         
     def neue_kante(self, kante):
         #self.strukturmatrix = hstack(self.struktur_matrix, kante.)
@@ -171,11 +171,16 @@ class statik:
     def gib_res_kraft(self, object_mit_res_kraft):
         pass
     
+
     
 class row_limited_csc(ss.csc_matrix):
     
     def __init__(self, arg1, num_rows=None, dtype=None, copy=False):
-            
+        
+        # @docstring:
+        # Die angegebene Matrix wird vergrößert, falls sie weniger Zeilen enthält als angegeben.
+        # Sie wird niemals verkleinert.
+          
         ss.csc_matrix.__init__(self, arg1, dtype=dtype, copy=copy)
         
         # Find the maximum number of entries per column and store it in self.num_rows
@@ -192,6 +197,10 @@ class row_limited_csc(ss.csc_matrix):
             else:
                 self.num_rows = num_rows
         
+        if self.num_rows == 0:
+            self.num_rows = 1
+            msg.error("Es wurde eine row_limited_csc Matrix ohne Zeilen erstellt. Die Zeilenanzahl wurde auf 1 erhöht.")
+        
         # correct the format of the matrix.
         
         new_data = []
@@ -201,99 +210,124 @@ class row_limited_csc(ss.csc_matrix):
         prev_ptr = 0
         for ptr in self.indptr:
             if ptr == 0:
+                new_indptr.append(0)
                 continue
+            
+            # Füge die bestehenden Daten ein
             new_data.extend(self.data[prev_ptr : ptr])
-            new_data.extend([0 for i in range(self.num_rows - (ptr - prev_ptr))])
-            
-            
             new_indices.extend(self.indices[prev_ptr : ptr])
-            #new_indizes.extend([i for i in set(range(num_rows))...])
-                # Es sollen die Indizes von unten aufgefüllt werden, jedoch nicht die aus self.indizes[prev_ptr : ptr] doppelt vorkommen.
+            
+            # Fülle die entstehenden Leerstellen von oben mit Nullen auf, bis es num_row Einträge gibt.
+            ind, data = self._backfilling(self.indices[prev_ptr : ptr])
+            new_data.extend(data)
+            new_indices.extend(ind)
+            
+            # Check this for debugging reasons:
+            if new_indptr[-1] + self.num_rows < ptr:
+                raise Exception("Some weird things happened here")
+            
+            # setze den Pointer
+            new_indptr.append(new_indptr[-1] + self.num_rows)
+            
+            prev_ptr = ptr
             
         
+        self.data = np.array(new_data)
+        self.indices = np.array(new_indices)
+        self.indptr = np.array(new_indptr)
+        self._shape = (self.indices.max() + 1, len(new_indptr) - 1)
         
-
-        # data, indizes, inptr sollten am Ende numpy arrays sein.
-        self._shape = (1, 1) # Correct this!
+        # setze full_check=False um Zeit zu sparen (O(1) statt O(n))
+        self.check_format(full_check=True)
+        self.check_doubled_indices()
+        
+    
+    def check_doubled_indices(self):
+        prev_ptr = 0
+        col = -1
+        for ptr in self.indptr:
             
+            for i in range(prev_ptr, ptr):
+                if (self.indices[i+1: ptr] == self.indices[i]).any():
+                    msg.warning("Der Index " + str(self.indices[i]) + " wurde mehrmals in der Spalte " + str(col) + " gefunden.")
 
-        # elif isinstance(arg1, tuple):
-            # if isshape(arg1):
-                # # It's a tuple of matrix dimensions (M, N)
-                # # create empty matrix
-                # self._shape = check_shape(arg1)
-                # M, N = self.shape
-                # # Select index dtype large enough to pass array and
-                # # scalar parameters to sparsetools
-                # idx_dtype = get_index_dtype(maxval=max(M, N))
-                # self.data = np.zeros(0, getdtype(dtype, default=float))
-                # self.indices = np.zeros(0, idx_dtype)
-                # self.indptr = np.zeros(self._swap((M, N))[0] + 1,
-                                       # dtype=idx_dtype)
-            # else:
-                # if len(arg1) == 2:
-                    # # (data, ij) format
-                    # other = self.__class__(
-                        # self._coo_container(arg1, shape=shape, dtype=dtype)
-                    # )
-                    # self._set_self(other)
-                # elif len(arg1) == 3:
-                    # # (data, indices, indptr) format
-                    # (data, indices, indptr) = arg1
+            prev_ptr = ptr
+            col += 1
+    
+    def _backfilling(self, present_ind):
+    
+        # Es sollen 'amount' viele Indizes von Null ab aufgefüllt werden, jedoch nicht die aus present_ind doppelt vorkommen.
+        amount = self.num_rows - len(present_ind)
+        i = 0
+        new_ind = []
+        while len(new_ind) < amount:
+            if i not in present_ind:
+                new_ind.append(i)
+            i += 1
+        return (new_ind, [0 for i in range(amount)])
+        
+        # Sofern alle fehlenden Daten mit 0 gefüllt werden, können auch alle fehlenden Indizes mit 0 gefüllt werden.
+        # Es kommen dann zwar doppelte Indizes vor, dafür spart man sich jedoch obige Schleife.
 
-                    # # Select index dtype large enough to pass array and
-                    # # scalar parameters to sparsetools
-                    # maxval = None
-                    # if shape is not None:
-                        # maxval = max(shape)
-                    # idx_dtype = get_index_dtype((indices, indptr),
-                                                # maxval=maxval,
-                                                # check_contents=True)
-
-                    # self.indices = np.array(indices, copy=copy,
-                                            # dtype=idx_dtype)
-                    # self.indptr = np.array(indptr, copy=copy, dtype=idx_dtype)
-                    # self.data = np.array(data, copy=copy, dtype=dtype)
-                # else:
-                    # raise ValueError("unrecognized {}_matrix "
-                                     # "constructor usage".format(self.format))
-
-        # else:
-            # # must be dense
-            # try:
-                # arg1 = np.asarray(arg1)
-            # except Exception as e:
-                # raise ValueError("unrecognized {}_matrix constructor usage"
-                                 # "".format(self.format)) from e
-            # self._set_self(self.__class__(
-                # self._coo_container(arg1, dtype=dtype)
-            # ))
-
-        # # Read matrix dimensions given, if any
-        # if shape is not None:
-            # self._shape = check_shape(shape)
-        # else:
-            # if self.shape is None:
-                # # shape not already set, try to infer dimensions
-                # try:
-                    # major_dim = len(self.indptr) - 1
-                    # minor_dim = self.indices.max() + 1
-                # except Exception as e:
-                    # raise ValueError('unable to infer matrix dimensions') from e
-                # else:
-                    # self._shape = check_shape(self._swap((major_dim,
-                                                          # minor_dim)))
-
-        # if dtype is not None:
-            # self.data = self.data.astype(dtype, copy=False)
-
-        # self.check_format(full_check=False)
-
-
-    def append_col(self, column):
+    def append(self, triple, fast=False):
+        # Vorsicht! Ist fast=True müssen die Eingabedaten bereits in der richtigen Form einer row_limited_csc sein.
+    
+        if fast:
+            # Dies ist das Tripel triple
+            (data, indices, indptr) = triple
             
-        pass
+            # Setze die Matrix:
+            self.data = np.concatenate([self.data, data])
+            self.indices = np.concatenate([self.indices, indices])
+            self.indptr = np.concatenate([self.indptr, indptr[1:] + self.indptr[-1]])
+            print(self.data)
+            print(self.indices)
+            print(self.indptr)
             
+            # Setze die Korrekte Form
+            maximum = max(indices)
+            if maximum >= self.shape[0]:
+                self._shape = (maximum + 1, self.shape[1] + len(indptr) - 1)
+            else:
+                self._shape = (self.shape[0], self.shape[1] + len(indptr) - 1)
+
+            # Prüfe Korrektheit im Falle des Debuggens:
+            self.check_format(full_check=False)
+            
+        else:
+            csc = row_limited_csc(triple, num_rows=self.num_rows)
+            csc = ss.hstack([self, csc])
+            self._set_self(csc)
+
+    def append_csc(self, csc_matrix, fast=False):
+        # Use this for row_limited_csc matrices.
+        
+        if fast or type(csc_matrix) == row_limited_csc:
+            self._set_self(ss.hstack([self, m]))
+        else:
+            self.append((csc_matrix.indptr, csc_matrix.indices, csc_matrix.data), fast=fast)
+
+ 
+    def override(self, vector, column):
+        # Diese Funktion überschreibt die angegebene Spalte
+        # Diese Funktion kann ebenfalls eine schnelle Version erhalten, in der nicht mit Nullen aufgefüllt wird.
+        
+        (data, indices) = vector
+
+        # Setze die Korrekte Form
+        maximum = max(indices)
+        if maximum >= self.shape[0]:
+            self._shape = (maximum + 1, self.shape[1])
+        else:
+            self._shape = (self.shape[0], self.shape[1])
+        
+        # Stelle die Korrekte Form sicher
+        bf_ind, bf_data = self._backfilling(indices)
+        
+        # Setze die Matrix
+        self.indices[self.indptr[column] : self.indptr[column + 1]] = np.concatenate([indices, bf_ind])
+        self.data[self.indptr[column] : self.indptr[column + 1]] = np.concatenate([data, bf_data])
+        
     
     
     
@@ -301,16 +335,28 @@ class row_limited_csc(ss.csc_matrix):
 if __name__ == "__main__":
     msg.state("Start")
     stat = statik()
-    print(stat.ecken_ans)
-    print(stat.ecken_res)
-    print(stat.kanten_res)
-    print(stat.struktur_matrix.toarray())
+    #print(stat.ecken_ans)
+    #print(stat.ecken_res)
+    #print(stat.kanten_res)
+    #print(stat.struktur_matrix.toarray())
     
     # (data, indices, indptr)
-    m = ss.csc_matrix(([1, 2, 3, 4, 5, 6, 7, 8, 9],[0, 4, 8, 0, 4, 8, 0, 4, 8],[0, 2, 4, 6, 8, 9]))
+    mat = ([1, 2, 3, 4, 5, 6, 7, 8, 9],[0, 2, 4, 0, 2, 1, 3, 5, 4],[0, 1, 1, 2, 8, 9])
+    m = row_limited_csc(mat)
+    print(m.data)
+    print(m.indices)
+    print(m.indptr)
     print(m.toarray())
     print(m.shape)
     
+    n = ss.csc_matrix(mat)
+    print(n.toarray())
+    print(n.shape)
+    
+    #m.append(mat, fast=True)
+    m.append(([7, 7, 7, 9, 8, 9], [0, 1, 2, 3, 4, 5], [0, 6]), fast=True)
+    m.override(([3, 3, 3, 3], [0, 1, 2, 3]), 3)
+    print(m.toarray())
     
     # c = dynamische_ecke(tuple([2, 2]), 4)
     # print(c)
