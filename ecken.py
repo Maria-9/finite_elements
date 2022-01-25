@@ -32,8 +32,6 @@ class nummeriert:
         else:
             return cls.__freie_nummern.pop()
     
-    def kind
-    
     def __init__(self):
         self.nummer = self.__class__._neue_nummer()
         msg.info(str(self.__class__))
