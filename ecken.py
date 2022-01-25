@@ -1,6 +1,10 @@
 
 # Elementare Klassen der Finiten Elemente Analyse
 
+# --------------
+# Beim überarbeiten des Moduls sollte auf eine einheitliche Schreibweise von indizes und indices geachtet werden.
+
+
 # Im folgenden Ordner ist das 'messagebox' Modul gespeichert.
 import sys
 sys.path.insert(1, 'C:\\Users\\Sebastian Hahn\\AppData\\Roaming\\Notepad++\\plugins\\config\\PythonScript\\npp_environment')
@@ -11,11 +15,14 @@ import scipy.sparse as ss
 
 
 class nummeriert:
+    # sollen zwei unterschiedliche Klassen in die selbe Nummerierung aufgenommen werden, so kann das __class__ Attribut manuell gleich gesetzt werden.
+    # type(obj) wird von der manuellen Setzung von __class__ nicht beeinflusst. 
+    # Eventuell ist es dann aber auch schöner dies von einer Art _kind abhängig zu machen, finde allerdings die Implementierung mit __class__ ganz gut.
 
     __freie_nummern = list()
     __höchste_nummer = 0
-    _kind = "nummeriertes_objekt"   # überschreibe dies
-    # Es ist denkbar, statt _kind auch einfach den Klassennamen self.__class__.__name__ zu verwenden.
+    _kind = "nummeriertes_objekt"   # überschreibe dies - _kind dient ausschließlich zur besseren Lesbarkeit auf der Konsole
+                                    # Es ist denkbar, statt _kind auch einfach den Klassennamen self.__class__.__name__ zu verwenden.
     
     @classmethod
     def _neue_nummer(cls):
@@ -25,15 +32,20 @@ class nummeriert:
         else:
             return cls.__freie_nummern.pop()
     
+    def kind
+    
     def __init__(self):
         self.nummer = self.__class__._neue_nummer()
         msg.info(str(self.__class__))
-        
+    
     def __del__(self):
         self.__class__.__freie_nummern.append(self.nummer)
     
     def __str__(self):
         return "\n Nummer: " + str(self.nummer) + "\t[" + self.__class__._kind + "]"
+    
+    def nummeriert_als(self, cls):
+        return self.__class__ == cls
     
 
 class ecke(nummeriert):
@@ -42,11 +54,12 @@ class ecke(nummeriert):
     _kind = "Ecke"
     
     def __init__(self, position):
-        self.position = position
-        self.kanten = list()
-        self.nachbarn = list()
+        super().__init__() # Gebe dem Objekt eine Nummer
         
-        super().__init__()
+        self.position = np.array(position)
+        self.dim = len(position)
+        self.kanten = list()        # Wozu gibt es hier eigentlich Kanten und Nachbarn - sollte eine Liste mit Kanten nicht ausreichen?
+        self.nachbarn = list()
     
     def __del__(self):
         super().__del__()
@@ -71,11 +84,11 @@ class ecke(nummeriert):
             raise IndexError("Der erste Index des Nachbarn stimmt nicht mit dem Ersten Index der Kante überein.")
         self.nachbarn.remove(nachbar)
         self.kanten.remove(kante)
-            
     
-    
-    def aktualisiere_strukturmatrix():
-        print("noch nicht implementiert")
+    def richtung_von(self, andere_ecke):
+        # gibt den Richtungsvektor zurück.
+        x = self.position - andere_ecke.position
+        return x / np.sqrt(x @ x)
     
     def __str__(self):
         return ("----------------------------"
@@ -89,12 +102,39 @@ class dynamische_ecke(ecke):
     
     _kind = "dynamisch"
     
-    def __init__(self, position, masse, statik=None):
-        #TODO: dynamische ecken tragen sich in der statik ein.
-        self.masse = masse
-        self.ansetzende_kraft = 0
-        self.resultierende_kraft = 0
+    def __init__(self, position, masse, statik, ans_kraft = 1):
         super().__init__(position)
+        self.masse = masse
+        
+        if statik.dim != self.dim:
+            raise ValueError("Ein " + statik.dim + " dimensionales Statik-Objekt kommt nicht mit einer " + self.dim + " dimensionalen Ecke zurecht.")
+
+        self.statik = statik
+        self.statik.inkludiere(self)
+        
+        # Dies sind Attribute die auf den Speicher im Objekt self.statik zurückgreifen.
+        self.ans_kraft = ans_kraft
+        self.res_kraft = 0
+    
+    def __del__(self): 
+        self.statik.exkludiere(self)
+        super().__del__()
+    
+    @property
+    def ans_kraft(self):
+        return self.statik.ecken_ans[nummer]
+    
+    @ans_kraft.setter
+    def setze_ans_kraft(self, ans_kraft)
+        self.statik.ecken_ans[nummer] = 
+        
+    @property
+    def res_kraft(self):
+        return self.statik.ecken_res[nummer]
+    
+    @res_kraft.setter
+    def setze_res_kraft(self, res_kraft)
+        self.statik.ecken_ans[self.statik.dim * nummer] = res_kraft
         
     
     def __str__(self):
@@ -117,7 +157,7 @@ class kante(nummeriert):
 
     _kind = "Kante"
     
-    def __init__(self, ecke1, ecke2, statik=None):
+    def __init__(self, ecke1, ecke2, statik):
         # TODO: die Kante trägt sich in der statik ein.
         self.ecke1 = ecke1
         self.ecke2 = ecke2
@@ -125,7 +165,10 @@ class kante(nummeriert):
         ecke1.neue_kante(self)
         ecke2.neue_kante(self)
         
-        self.resustierende_kraft = 0
+        self.statik = statik
+        self.statik.inkludiere(self)
+        
+        self.res_kraft = 0
         
         super().__init__()
     
@@ -140,9 +183,20 @@ class kante(nummeriert):
     def auflösen(self):
         self.ecke1.entferne_kante(self)
         self.ecke2.entferne_kante(self)
+    
+    @property
+    def res_kraft(self):
+        return self.statik.kanten_res[self.nummer]
+    
+    @res_kraft.setter
+    def setze_res_kraft(self, res_kraft):
+        self.statik.kanten_res[self.nummer] = res_kraft
         
     def __del__(self):
+        self.statik.exkludiere(self)
         super().__del__()
+        
+    
     
     def __str__(self):
         return (super().__str__()
@@ -157,7 +211,76 @@ class statik:
         self.ecken_res = ecken_res              # die an den Eckpunkten resultierenden Kräfte nach der berechnung e_r = e_a + S * k_r
         self.kanten_res = kanten_res            # die an den Kanten resultierenden Kräfte k_r = S^(-1) * e_a
         self.struktur_matrix = row_limited_csc(([0], [0], [0,1]), num_rows=2*dim, dtype=float)      # die Strukturmatrix.
+  
+    def inkludiere(self, obj):
         
+        # obj == Ecke
+        if obj.nummeriert_als(dynamische_ecke):
+            # stelle sicher, dass es Plätze für die Kräfte der Ecke gibt.
+            if len(ecken_ans) <= obj.nummer:
+                supplement = np.zeros(((obj.nummer - len(ecken_ans) + 1)*self.dim,))
+                ecken_ans = np.concatenate((ecken_ans, supplement))
+                ecken_res = np.concatenate((ecken_res, supplement))
+            else:
+                for array in [ecken_ans, ecken_res]:
+                    if array[obj.nummer*self.dim : (obj.nummer+1)*self.dim-1] != [0]*self.dim:
+                        msg.warning("Der Speicherplatz auf den die neue Ecke zugreift war ungleich 0.")
+        
+        # obj == Kante
+        if obj.nummeriert_als(kante):
+            
+            # berechne die Kräfteverteilung auf die Ecken 
+            # (- also die zur Kante gehörige Spalte in der Strukturmatrix.)
+            
+            vec = (list(), list()) # indizes, daten
+            for e in [kante.ecke1, kante.ecke2]:
+                vec[0].extend([e.nummer * self.dim + i for i in range(self.dim)])
+                vec[1].extend(e.richtung_von(kante.gib_nachbar(e)))
+            
+            if np.shape(vec) != (2, 2 * self.dim):
+                raise Exception("Weird things happened")
+            
+            if len(kanten_res) <= obj.nummer:
+            
+                # erweitere die Plätze für die Kantenkräfte
+                supplement = np.zeros((obj.nummer - len(kanten_res) + 1,))
+                kanten_res = np.concatenate((kanten_res, supplement))
+                
+                # erweitere die Strukturmatrix
+                #   erzeuge leere Matrix der richtigen Form
+                indptr = [i*dim for i in range(len(supplement) + 1)]
+                indices = [i for i in range(2*dim)] * (len(supplement))
+                data = [0] * len(indizes)
+                
+                #   schreibe die Kräfteverteilung hinein
+                indices[-2*self.dim : 0] = vec[0]
+                data[-2*self.dim : 0] = vec[1]
+                
+                #   hänge die Matrix an die Strukturmatrix an.
+                self.struktur_matrix.append((data, indices, indptr), fast=True)
+
+            else:
+                if kanten_res[obj.nummer] != 0:
+                    msg.warning("Der Speicherplatz auf den die neue Kante zugreift war ungleich 0.")
+                
+                # trage die Kräfteverteilung in die Strukturmatrix ein.
+                self.struktur_matrix.override((vec[1], vec[0]), obj.nummer)
+        
+    def exkludiere(self, obj):
+        # obj == Ecke
+        if obj.nummeriert_als(dynamische_ecke):
+            i = [obj.nummer * self.dim + i for i in range(self.dim)]
+            self.ecken_ans[i] = [0] * self.dim  
+            self.ecken_res[i] = [0] * self.dim
+        
+        if obj.nummeriert_als(kante):
+            self.kanten_res[obj.nummer] = 0
+            self.struktur_matrix.override(([0]*2*self.dim, [i for i in range(2*self.dim)]))
+                # Die letzte Zeile ist sehr wichtig.
+                
+                
+            
+                  
     def neue_kante(self, kante):
         
         pass
@@ -376,8 +499,21 @@ class row_limited_csc(ss.csc_matrix):
         # Setze die Matrix
         self.indices[self.indptr[column] : self.indptr[column + 1]] = np.concatenate([indices, bf_ind])
         self.data[self.indptr[column] : self.indptr[column + 1]] = np.concatenate([data, bf_data])
-        
+
+
+
     
+class universe:
+    
+    def __init__(self):
+        self.ecken = list()
+        k = 10
+        j = 0
+        for i in range(k):
+            if i % 2 == 0:
+                e = dynamische_ecke(...)
+            self.ecken.append(e)
+            
     
     
     
