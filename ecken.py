@@ -100,9 +100,9 @@ class dynamische_ecke(ecke):
     
     _kind = "dynamisch"
     
-    def __init__(self, position, masse, statik, ans_kraft = 1):
+    def __init__(self, position, statik, ans_kraft = [1] + [0 for i in position[0:-1]]):
         super().__init__(position)
-        self.masse = masse
+        self.masse = None # Die Masse spielt erst bei Bewegungen eine Rolle
         
         if statik.dim != self.dim:
             raise ValueError("Ein " + statik.dim + " dimensionales Statik-Objekt kommt nicht mit einer " + self.dim + " dimensionalen Ecke zurecht.")
@@ -118,21 +118,25 @@ class dynamische_ecke(ecke):
         self.statik.exkludiere(self)
         super().__del__()
     
+    def __stat_sp(self):
+        # Gibt den Speicherbereich für die Kräfte im Statik Objekt zurück.
+        return [nummer*self.dim + i for i in range(self.dim)]
+    
     @property
     def ans_kraft(self):
-        return self.statik.ecken_ans[nummer]
+        return self.statik.ecken_ans[self.__stat_sp()]
     
     @ans_kraft.setter
     def setze_ans_kraft(self, ans_kraft)
-        self.statik.ecken_ans[nummer] = 
+        self.statik.ecken_ans[self.__stat_sp()] = ans_kraft
         
     @property
     def res_kraft(self):
-        return self.statik.ecken_res[nummer]
+        return self.statik.ecken_res[self.__stat_sp()]
     
     @res_kraft.setter
     def setze_res_kraft(self, res_kraft)
-        self.statik.ecken_ans[self.statik.dim * nummer] = res_kraft
+        self.statik.ecken_res[self.__stat_sp()] = res_kraft
         
     
     def __str__(self):
@@ -193,9 +197,7 @@ class kante(nummeriert):
     def __del__(self):
         self.statik.exkludiere(self)
         super().__del__()
-        
-    
-    
+          
     def __str__(self):
         return (super().__str__()
                 + "\n Ecken: [" + str(self.ecke1.nummer) + ", " + str(self.ecke2.nummer) + "]")
@@ -203,11 +205,11 @@ class kante(nummeriert):
 
 class statik:
     
-    def __init__(self, dim = 2, ecken_ans = np.array([0]), ecken_res = np.array([0]), kanten_res = np.array([0])):
-        self.dim = dim                          # die Dimension in der sich die Statik bewegt.
-        self.ecken_ans = ecken_ans              # die an den Eckpunkten ansetzenden Kräfte e_a
-        self.ecken_res = ecken_res              # die an den Eckpunkten resultierenden Kräfte nach der berechnung e_r = e_a + S * k_r
-        self.kanten_res = kanten_res            # die an den Kanten resultierenden Kräfte k_r = S^(-1) * e_a
+    def __init__(self, num_ecken, num_kanten, dim = 2):
+        self.dim = dim                                  # die Dimension in der sich die Statik bewegt.
+        self.ecken_ans = np.zeros(num_ecken*self.dim)   # die an den Eckpunkten ansetzenden Kräfte e_a
+        self.ecken_res = np.zeros(num_ecken*self.dim)   # die an den Eckpunkten resultierenden Kräfte nach der berechnung e_r = e_a + S * k_r
+        self.kanten_res = np.zeros(num_kanten)          # die an den Kanten resultierenden Kräfte k_r = S^(-1) * e_a
         self.struktur_matrix = row_limited_csc(([0], [0], [0,1]), num_rows=2*dim, dtype=float)      # die Strukturmatrix.
   
     def inkludiere(self, obj):
@@ -270,31 +272,12 @@ class statik:
             i = [obj.nummer * self.dim + i for i in range(self.dim)]
             self.ecken_ans[i] = [0] * self.dim  
             self.ecken_res[i] = [0] * self.dim
-        
+
         if obj.nummeriert_als(kante):
             self.kanten_res[obj.nummer] = 0
-            self.struktur_matrix.override(([0]*2*self.dim, [i for i in range(2*self.dim)]))
-                # Die letzte Zeile ist sehr wichtig.
+            self.struktur_matrix.override(([0]*2*self.dim, [i for i in range(2*self.dim)])) # Diese Zeile ist sehr wichtig.
                 
-                
-            
-                  
-    def neue_kante(self, kante):
-        
-        pass
-        
-    def aktualisiere_kante(self, kante):
-        pass
-    
-    def entferne_kante(self, kante):
-        pass
-    
-    def setze_ans_kraft(self, ecke):
-        pass
-    
-    def gib_res_kraft(self, object_mit_res_kraft):
-        pass
-    
+
 
     
 class row_limited_csc(ss.csc_matrix):
@@ -307,7 +290,7 @@ class row_limited_csc(ss.csc_matrix):
         # @docstring:
         # Die angegebene Matrix wird vergrößert, falls sie weniger Zeilen enthält als angegeben.
         # Sie wird niemals verkleinert.
-          
+
         ss.csc_matrix.__init__(self, arg1, dtype=dtype, shape=shape, copy=copy)
         
         # Find the maximum number of entries per column and store it in self.num_rows
@@ -436,7 +419,7 @@ class row_limited_csc(ss.csc_matrix):
         # Das Ergebnis dieses Skriptes besagt, stets die schnellen Varianten zu verwenden. 
         # Für genauere Untersuchungen scheint die time-Methode nicht brauchbar. Evtl. könnte man dies umschreiben auf timeit?
         #
-        
+
         mat = ([1, 2, 3, 4, 5, 6, 7, 8, 9],[0, 2, 4, 0, 2, 1, 3, 5, 4],[0, 1, 1, 2, 8, 9])
         vec = ([7, 7, 7, 9, 8, 9], [0, 1, 2, 3, 4, 5], [0, 6])
         npvec = (np.array(vec[0]), np.array(vec[1]), np.array(vec[2]))
@@ -504,34 +487,40 @@ class row_limited_csc(ss.csc_matrix):
 class universe:
     
     def __init__(self):
+        num_ecken = 10
+        num_kanten = 2 * num_ecken
+        stat = statik(num_ecken, num_kanten)
+        self.st_ecken = list()
         self.ecken = list()
-        k = 10
-        j = 0
-        for i in range(k):
+        self.kanten = list()
+        
+        for i in range(num_ecken):
             if i % 2 == 0:
-                e = dynamische_ecke(...)
+                e = dynamische_ecke((i / 2 + 1, 1), stat)
+            else:
+                e = dynamische_ecke((i / 2, 2), stat)
             self.ecken.append(e)
+        
+        prev_2 = statische_ecke((0, 1))
+        prev_1 = statische_ecke((0, 2))
+        
+        self.st_ecken.append(prev_2, prev_1)
+        
+        for e in self.ecken:
+            self.kanten.append(kante(prev_2, e, stat))
+            self.kanten.append(kante(prev_1, e, stat))
             
-    
+            pre_2 = prev_1
+            prev_1 = e
+        
+    def paint(self):
+        pass
     
     
 if __name__ == "__main__":
-    from time import time
+    
     msg.state("Start")
-    stat = statik()
-    #print(stat.ecken_ans)
-    #print(stat.ecken_res)
-    #print(stat.kanten_res)
-    #print(stat.struktur_matrix.toarray())
     
-    # (data, indices, indptr)
-    
-    
-    
-    
-        
-    #m.override(([3, 3, 3, 3, 3, 3], [0, 1, 2, 3, 4, 5]), 3)
-    #print(m.toarray())
     
     
     
