@@ -131,6 +131,29 @@ class statik:
             self.kanten_res[obj.nummer] = 0
             self.struktur_matrix.override(([0]*2*self.dim, [i for i in range(2*self.dim)])) # Diese Zeile ist sehr wichtig.
 
+    def berechne(self):
+        # a := ecken_ans
+        # e := ecken_res
+        # S := struktur_matrix
+        # r := kanten_res
+        
+        # es gibt eine neue ansetzende Kraft a.
+        # minimiere über r die Norm von
+        # e = Sr + a = S*dr + (a + S*r_0)
+        # dies entspricht dem Lösen des least-aquares Problem von S*dr = -a - S*r_0
+        # mit r = dr + r_0, wobei r_0 die alte resultierende Kraft ist.
+        
+        dr, istop, itn, r1norm = ss.linalg.lsqr(struktur_matrix, ss.bsr_array( - ecken_ans - struktur_matrix.dot(kanten_res)),
+                       damp = 0, atol = 0.01, iter_lim = 1000, show = True)
+        
+        kanten_res = dr + kanten_res
+        ecken_res = struktur_matrix.dot(kanten_res) + ecken_ans
+        
+        msg.info("Statik Berechnung:\n" +
+                   " Gestoppt bei Iteration: " + str(itn) + "\n" +
+                   " 1-Norm der Abweichung: " + str(r1norm))
+        
+        
 
 class ecke(nummeriert):
 
@@ -246,13 +269,18 @@ class dynamische_ecke(ecke):
     def setze_res_kraft(self, res_kraft):
         self.statik.ecken_res[self.__stat_sp()] = res_kraft
         
-    
     def __str__(self):
         return (super().__str__()
                 + "\n Masse : " + str(self.masse)
                 + "\n Ansetzende Kraft: " + str(self.ansetzende_kraft)
                 + "\n Resultierende Kraft: " + str(self.resultierende_kraft))
     
+    def verts_codes_color(self):
+        verts, codes = self.verts_codes()
+        
+        color = (0, 1 - 1/(np.linalg.norm(self.res_kraft) + 1), 0.1)
+        
+        return verts, codes, color
 
 class statische_ecke(ecke):
     # statische Ecken tragen sich nicht in der statik ein.
@@ -261,16 +289,23 @@ class statische_ecke(ecke):
     
     def __init__(self, position):
         super().__init__(position)
+    
+    def verts_codes_color(self):
+        verts, codes = self.verts_codes()
+        
+        color = (0, 0, 0)
 
+        return verts, codes, color
 
 
 class kante(nummeriert):
 
     _kind = "Kante"
     
-    def __init__(self, ecke1, ecke2, statik):
+    def __init__(self, ecke1, ecke2, statik, kraft_limit=10):
         
         super().__init__()
+        self.kraft_limit = kraft_limit
 
         self.ecke1 = ecke1
         self.ecke2 = ecke2
@@ -311,7 +346,7 @@ class kante(nummeriert):
         return (super().__str__()
                 + "\n Ecken: [" + str(self.ecke1.nummer) + ", " + str(self.ecke2.nummer) + "]")
             
-    def verts_codes(self):
+    def verts_codes_color(self):
         if self.ecke1.dim != 2 or self.ecke2.dim != 2:
             raise Exception("Diese Funktion ist nur für 2-D Plots erstellt worden.")
         
@@ -320,7 +355,13 @@ class kante(nummeriert):
         codes = [path.Path.MOVETO,
                 path.Path.LINETO]
         
-        return (verts, codes)
+        color = [0, 0, 0] # RGB
+        if self.res_kraft > 0:
+            color[0] = min(1, np.sqrt(self.res_kraft) / self.kraft_limit)
+        else:
+            color[2] = min(1, -self.res_kraft / self.kraft_limit)
+        
+        return (verts, codes, color)
 
     
 class row_limited_csc(ss.csc_matrix):
@@ -537,6 +578,25 @@ class row_limited_csc(ss.csc_matrix):
         self.data[self.indptr[column] : self.indptr[column + 1]] = np.concatenate([data, bf_data])
 
 
+class matplot:
+    def __init__(self, shape=(8,8)):
+        self.fig, self.ax = plt.subplots()
+        self.shape = shape
+      
+    def add(self, objects):
+        for obj in objects:
+            verts, codes, color = obj.verts_codes_color()
+            obj_path = path.Path(verts, codes)
+            patch = patches.PathPatch(obj_path, facecolor=color,
+                                    edgecolor=color, alpha=0.5)
+            self.ax.add_patch(patch)
+    
+    def show(self):
+        maximum = 8
+        self.ax.set_xlim(0, self.shape[0])
+        self.ax.set_ylim(0, self.shape[1])
+        
+        plt.show()
 
     
 class universe:
@@ -548,6 +608,7 @@ class universe:
         self.st_ecken = list()
         self.ecken = list()
         self.kanten = list()
+        self.mplot = matplot()
         
         for i in range(num_ecken):
             if i % 2 == 0:
@@ -568,41 +629,20 @@ class universe:
             
             prev_2 = prev_1
             prev_1 = e
-    
-    def add_to_ax(self, list_obj, ax, color = 'green'):
-        verts = []
-        codes = []
-        
-        for e in list_obj:
-            (v, c) = e.verts_codes()
-            verts.extend(v)
-            codes.extend(c)
-        
-        
-        pointpath = path.Path(verts, codes)
-        patch = patches.PathPatch(pointpath, facecolor=color,
-        edgecolor='yellow', alpha=0.5)
-        ax.add_patch(patch)
+
         
     def plot(self):
         
-        fig, ax = plt.subplots()
+        for obj in [self.ecken, self.st_ecken, self.kanten]:
+            self.mplot.add(obj)
         
-        self.add_to_ax(self.ecken, ax, color='green')
-        
-        self.add_to_ax(self.st_ecken, ax, color='black')
-        
-        self.add_to_ax(self.kanten, ax, color='orange')
-        
-        maximum = 8
-        ax.set_xlim(0, maximum)
-        ax.set_ylim(0, maximum)
-        
-        plt.show()
-        
-        pass
+        self.mplot.show()
+
     
-    
+    def run(self):
+        self.stat.berechne()
+        self.plot()
+
 if __name__ == "__main__":
     
     msg.state("Start")
