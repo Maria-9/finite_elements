@@ -281,7 +281,26 @@ class dynamische_ecke(ecke):
                 + "\n Resultierende Kraft: " + str(self.resultierende_kraft))
     
     def verts_codes_color(self):
+        # verts, codes für den Punkt
         verts, codes = self.verts_codes()
+        
+        #verts, codes für den Pfeil
+        länge_pfeil = 0.5
+        norm = np.linalg.norm(self.res_kraft)
+        if  norm > 0.05:
+            scal = self.res_kraft/norm
+            verts.append(self.position)
+            verts.append(self.position + scal * länge_pfeil)
+            verts.append(self.position + (scal * 0.8 + np.array([scal[1], -scal[0]])*0.2) * länge_pfeil)
+            verts.append(self.position + scal * länge_pfeil)
+            verts.append(self.position + (scal * 0.8 + np.array([-scal[1], scal[0]])*0.2) * länge_pfeil)
+            
+            
+            codes.append(path.Path.MOVETO)
+            codes.append(path.Path.LINETO)
+            codes.append(path.Path.MOVETO)
+            codes.append(path.Path.LINETO)
+            codes.append(path.Path.LINETO)
         
         color = (0, 1 - 1/(np.linalg.norm(self.res_kraft) + 1), 0.1)
         
@@ -307,7 +326,7 @@ class kante(nummeriert):
 
     _kind = "Kante"
     
-    def __init__(self, ecke1, ecke2, statik, kraft_limit=10):
+    def __init__(self, ecke1, ecke2, statik, kraft_limit=28):
         
         super().__init__()
         self.kraft_limit = kraft_limit
@@ -365,6 +384,8 @@ class kante(nummeriert):
             color[0] = min(1, self.res_kraft / self.kraft_limit)
         else:
             color[2] = min(1, -self.res_kraft / self.kraft_limit)
+            if self.res_kraft < -self.kraft_limit:
+                color[1] = 1
         
         return (verts, codes, color)
 
@@ -584,7 +605,7 @@ class row_limited_csc(ss.csc_matrix):
 
 
 class matplot:
-    def __init__(self, shape=(8,8)):
+    def __init__(self, shape=(12,10)):
         self.fig, self.ax = plt.subplots()
         self.shape = shape
       
@@ -597,7 +618,6 @@ class matplot:
             self.ax.add_patch(patch)
     
     def show(self):
-        maximum = 8
         self.ax.set_xlim(0, self.shape[0])
         self.ax.set_ylim(0, self.shape[1])
         
@@ -627,7 +647,7 @@ class universe:
             self.ecken.append(e)
         
         #setze Eckpunkt
-        self.ecken.append(dynamische_ecke((2, höhe_turm+1), self.stat))
+        self.ecken.append(dynamische_ecke((2, höhe_turm + 1), self.stat))
         
         #baue nach rechts
         for i in range(2*länge_überhang):
@@ -636,6 +656,10 @@ class universe:
             else:
                 e = dynamische_ecke((2 + (i+1)/2, höhe_turm + 1), self.stat)
             self.ecken.append(e)
+        
+        #baue den Balancierpunkt für eine Wage
+        self.ecken.append(dynamische_ecke((3 + länge_überhang, höhe_turm+1), self.stat))
+        self.ecken.append(dynamische_ecke((3 + länge_überhang, höhe_turm+2), self.stat))
         
         #setze zwei statischen Ecken am Boden
         prev_2 = statische_ecke((1, 0))
@@ -651,6 +675,16 @@ class universe:
             
             prev_2 = prev_1
             prev_1 = e
+        
+        # baue die Wage
+        self.ecken.append(dynamische_ecke((1 + länge_überhang, höhe_turm+3), self.stat))
+        self.ecken.append(dynamische_ecke((5 + länge_überhang, höhe_turm+3), self.stat))
+        self.ecken.append(dynamische_ecke((5 + länge_überhang, höhe_turm+4), self.stat))
+        
+        self.kanten.append(kante(self.ecken[-4], self.ecken[-3], self.stat))
+        self.kanten.append(kante(self.ecken[-4], self.ecken[-2], self.stat))
+        self.kanten.append(kante(self.ecken[-2], self.ecken[-3], self.stat))
+        self.kanten.append(kante(self.ecken[-1], self.ecken[-2], self.stat))
 
         
     def plot(self):
@@ -670,9 +704,6 @@ if __name__ == "__main__":
     msg.state("Start")
     uni = universe()
     uni.run()
-    
-    print(uni.stat.ecken_ans)
-    print(uni.stat.kanten_res)
     
     
     
