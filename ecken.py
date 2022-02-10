@@ -15,6 +15,7 @@ import scipy.sparse as ss
 import matplotlib.patches as patches
 import matplotlib.path as path
 import matplotlib.pyplot as plt
+from scipy.sparse.linalg import lsqr
 
 
 class nummeriert:
@@ -61,13 +62,13 @@ class statik:
         # obj == Ecke
         if obj.nummeriert_als(dynamische_ecke):
             # stelle sicher, dass es Plätze für die Kräfte der Ecke gibt.
-            if len(self.ecken_ans) <= obj.nummer:
-                supplement = np.zeros(((obj.nummer - len(self.ecken_ans) + 1)*self.dim,))
+            if len(self.ecken_ans) <= obj.nummer*self.dim:
+                supplement = np.zeros((self.dim*(obj.nummer+1) - len(self.ecken_ans),))
                 self.ecken_ans = np.concatenate((self.ecken_ans, supplement))
                 self.ecken_res = np.concatenate((self.ecken_res, supplement))
             else:
                 for array in [self.ecken_ans, self.ecken_res]:
-                    if (array[obj.nummer*self.dim : (obj.nummer+1)*self.dim-1] != [0]*self.dim).any():
+                    if (np.array(array[obj.nummer*self.dim : (obj.nummer+1)*self.dim]) != [0]*self.dim).any():
                         msg.warning("Der Speicherplatz auf den die neue Ecke zugreift war ungleich 0.")
         
         # obj == Kante
@@ -101,13 +102,12 @@ class statik:
                 
                 # erweitere die Strukturmatrix
                 #   erzeuge leere Matrix der richtigen Form
-                indptr = [i*dim for i in range(len(supplement) + 1)]
-                indices = [i for i in range(2*dim)] * (len(supplement))
-                data = [0] * len(indizes)
-                
+                indptr = [i*2*self.dim for i in range(len(supplement) + 1)]
+                indices = [i for i in range(2*self.dim)] * (len(supplement))
+                data = [0] * len(indices)
                 #   schreibe die Kräfteverteilung hinein
-                indices[-2*self.dim : 0] = vec[0]
-                data[-2*self.dim : 0] = vec[1]
+                indices[len(indices)-2*self.dim : len(indices)] = vec[0]
+                data[len(indices)-2*self.dim : len(indices)] = vec[1]
                 
                 #   hänge die Matrix an die Strukturmatrix an.
                 self.struktur_matrix.append((data, indices, indptr), fast=True)
@@ -143,15 +143,20 @@ class statik:
         # dies entspricht dem Lösen des least-aquares Problem von S*dr = -a - S*r_0
         # mit r = dr + r_0, wobei r_0 die alte resultierende Kraft ist.
         
-        dr, istop, itn, r1norm = ss.linalg.lsqr(struktur_matrix, ss.bsr_array( - ecken_ans - struktur_matrix.dot(kanten_res)),
-                       damp = 0, atol = 0.01, iter_lim = 1000, show = True)
+        # Die Rechengeschwindigkeit kann ev. verbessert werden, indem (- self.ecken_ans - self.struktur_matrix.dot(self.kanten_res))
+        # in ein ss.bsr_array gecaset wird. (Ist hierfür eine neue Version von scipy notwendig?)
+        # Des weiteren könnte der lsrq - Optimierer durch eine eigene Version verschnellert werden, indem eine sparse List of List - Matrix mitgeführt.
+        # Über diese könnte für jede Knotenkraft, die sich verändert hat, die Kanten ermittelt werden, über die eine Optimierung notwendig ist.
         
-        kanten_res = dr + kanten_res
-        ecken_res = struktur_matrix.dot(kanten_res) + ecken_ans
+        erg = lsqr(self.struktur_matrix, - self.ecken_ans - self.struktur_matrix.dot(self.kanten_res),
+                       damp = 0, atol = 0.001, iter_lim = 1000, show = True)
+        dr = erg[0]
+        self.kanten_res = dr + self.kanten_res
+        self.ecken_res = self.struktur_matrix.dot(self.kanten_res) + self.ecken_ans
         
         msg.info("Statik Berechnung:\n" +
-                   " Gestoppt bei Iteration: " + str(itn) + "\n" +
-                   " 1-Norm der Abweichung: " + str(r1norm))
+                   " Gestoppt bei Iteration: " + str(erg[2]) + "\n" +
+                   " 1-Norm der Abweichung: " + str(erg[3]))
         
         
 
@@ -229,7 +234,7 @@ class dynamische_ecke(ecke):
     
     def __init__(self, position, statik, ans_kraft = "DEFAULT"):
         if ans_kraft == "DEFAULT":
-            ans_kraft = [1] + [0 for i in position[0:-1]]
+            ans_kraft = [0 for i in position[0:-1]] + [-1]
             
         
         super().__init__(position)
@@ -357,7 +362,7 @@ class kante(nummeriert):
         
         color = [0, 0, 0] # RGB
         if self.res_kraft > 0:
-            color[0] = min(1, np.sqrt(self.res_kraft) / self.kraft_limit)
+            color[0] = min(1, self.res_kraft / self.kraft_limit)
         else:
             color[2] = min(1, -self.res_kraft / self.kraft_limit)
         
@@ -602,30 +607,47 @@ class matplot:
 class universe:
     
     def __init__(self):
-        num_ecken = 10
-        num_kanten = 2 * num_ecken
-        stat = statik(num_ecken, num_kanten)
+        höhe_turm = 5
+        länge_überhang = 2
+        num_ecken = 2*(höhe_turm + länge_überhang) + 1
+        num_kanten = 2 * num_ecken 
+        #self.stat = statik(num_ecken, num_kanten) # Je genauer die Werte für num sind, desto weniger Rechenzeit wird zum Aufbau benötigt.
+        self.stat = statik(1, 1)
         self.st_ecken = list()
         self.ecken = list()
         self.kanten = list()
         self.mplot = matplot()
         
-        for i in range(num_ecken):
+        #baue den Turm
+        for i in range(höhe_turm*2):
             if i % 2 == 0:
-                e = dynamische_ecke((1, i / 2 + 1), stat)
+                e = dynamische_ecke((1, i / 2 + 1), self.stat)
             else:
-                e = dynamische_ecke((2, (i+1) / 2), stat)
+                e = dynamische_ecke((2, (i+1) / 2), self.stat)
             self.ecken.append(e)
         
+        #setze Eckpunkt
+        self.ecken.append(dynamische_ecke((2, höhe_turm+1), self.stat))
+        
+        #baue nach rechts
+        for i in range(2*länge_überhang):
+            if i % 2 == 0:
+                e = dynamische_ecke((3 + i/2, höhe_turm), self.stat)
+            else:
+                e = dynamische_ecke((2 + (i+1)/2, höhe_turm + 1), self.stat)
+            self.ecken.append(e)
+        
+        #setze zwei statischen Ecken am Boden
         prev_2 = statische_ecke((1, 0))
         prev_1 = statische_ecke((2, 0))
         
         self.st_ecken.extend([prev_2, prev_1])
         
+        #setze die Kanten
         for e in self.ecken:
             
-            self.kanten.append(kante(prev_2, e, stat))
-            self.kanten.append(kante(prev_1, e, stat))
+            self.kanten.append(kante(prev_2, e, self.stat))
+            self.kanten.append(kante(prev_1, e, self.stat))
             
             prev_2 = prev_1
             prev_1 = e
@@ -647,7 +669,10 @@ if __name__ == "__main__":
     
     msg.state("Start")
     uni = universe()
-    uni.plot()
+    uni.run()
+    
+    print(uni.stat.ecken_ans)
+    print(uni.stat.kanten_res)
     
     
     
