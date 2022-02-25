@@ -47,7 +47,8 @@ class nummeriert:
     
     def nummeriert_als(self, cls):
         return self.__class__ == cls
-    
+ 
+ 
 class statik:
     
     def __init__(self, num_ecken, num_kanten, dim = 2):
@@ -158,7 +159,7 @@ class statik:
                    " Gestoppt bei Iteration: " + str(erg[2]) + "\n" +
                    " 1-Norm der Abweichung: " + str(erg[3]))
         
-        
+   
 
 class ecke(nummeriert):
 
@@ -305,6 +306,8 @@ class dynamische_ecke(ecke):
         color = (0, 1 - 1/(np.linalg.norm(self.res_kraft) + 1), 0.1)
         
         return verts, codes, color
+
+
 
 class statische_ecke(ecke):
     # statische Ecken tragen sich nicht in der statik ein.
