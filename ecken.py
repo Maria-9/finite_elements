@@ -57,7 +57,7 @@ class statik:
         self.kanten_res = np.zeros(num_kanten)          # die an den Kanten resultierenden Kräfte k_r = S^(-1) * e_a
         self.struktur_matrix = row_limited_csc.empty(2*self.dim, len(self.kanten_res), dtype=float)      # die Strukturmatrix.
   
-    def inkludiere(self, obj):
+    def inkludiere(self, obj : nummeriert):
         
         # obj == Ecke
         if obj.nummeriert_als(dynamische_ecke):
@@ -119,7 +119,7 @@ class statik:
                 # trage die Kräfteverteilung in die Strukturmatrix ein.
                 self.struktur_matrix.override((vec[1], vec[0]), obj.nummer)
         
-    def exkludiere(self, obj):
+    def exkludiere(self, obj : nummeriert):
         # obj == Ecke
         if obj.nummeriert_als(dynamische_ecke):
             i = [obj.nummer * self.dim + i for i in range(self.dim)]
@@ -622,6 +622,7 @@ class matplot:
         self.ax.set_ylim(0, self.shape[1])
         
         plt.show()
+
 
     
 class universe:
