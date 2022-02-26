@@ -69,4 +69,16 @@ Workflow:
 	oder	
 		-> Jump & Run
 
+Meilenstein 2.1 Fahrplan:
+	-> Polygone erstellen(Quadrat, Dreieck)
+	-> Die Polygone zusammensetzen mittels neuer Punke auf den Polygonoberflächen an den Berührugnsstellen.
+		-> Das finden der Berührungspunkte und das setzen der verbindenden Kanten sollte von selbst geschehen.
+	-> Auflösen von Kanten, deren Kraft überstiegen wurde, sowohl den Kanten, deren gekoppelte Kanten aufgelöst wurden.
+		-> Anschließende erneute Berechnung der resultierenden Kräfte. 
+	
+Meilenstein 2.2 Fahrplan:
+	-> Finde die Zusmmenhangskomponenten
+	-> berechne die Bewegung der Zusammenhangskomponenten
+	-> Bewege sie und erhoffe keine Verzerrung von Kanten etc.
+
 
