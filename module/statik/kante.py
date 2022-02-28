@@ -50,7 +50,7 @@ class kante(nummeriert):
         return (super().__str__()
                 + "\n Ecken: [" + str(self.ecke1.nummer) + ", " + str(self.ecke2.nummer) + "]")
             
-    '''def verts_codes_color(self):
+    def verts_codes_color(self):
         """ Gibt die Vertexe und Kodes für das plotten mit Matplotlib zurück."""
         if self.ecke1.dim != 2 or self.ecke2.dim != 2:
             raise Exception("Diese Funktion ist nur für 2-D Plots erstellt worden.")
@@ -68,4 +68,4 @@ class kante(nummeriert):
             if self.res_kraft < -self.kraft_limit:
                 color[1] = 1
         
-        return (verts, codes, color)'''
+        return (verts, codes, color)
