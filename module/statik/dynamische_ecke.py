@@ -58,31 +58,3 @@ class dynamische_ecke(ecke):
                 + "\n Masse : " + str(self.masse)
                 + "\n Ansetzende Kraft: " + str(self.ansetzende_kraft)
                 + "\n Resultierende Kraft: " + str(self.resultierende_kraft))
-    
-    def verts_codes_color(self):
-        """ Gibt die Vertexe und Kodes für das plotten mit Matplotlib zurück."""
-    
-        # verts, codes für den Punkt
-        verts, codes = self.verts_codes()
-        
-        #verts, codes für den Pfeil
-        länge_pfeil = 0.5
-        norm = np.linalg.norm(self.res_kraft)
-        if  norm > 0.05:
-            scal = self.res_kraft/norm
-            verts.append(self.position)
-            verts.append(self.position + scal * länge_pfeil)
-            verts.append(self.position + (scal * 0.8 + np.array([scal[1], -scal[0]])*0.2) * länge_pfeil)
-            verts.append(self.position + scal * länge_pfeil)
-            verts.append(self.position + (scal * 0.8 + np.array([-scal[1], scal[0]])*0.2) * länge_pfeil)
-            
-            
-            codes.append(path.Path.MOVETO)
-            codes.append(path.Path.LINETO)
-            codes.append(path.Path.MOVETO)
-            codes.append(path.Path.LINETO)
-            codes.append(path.Path.LINETO)
-        
-        color = (0, 1 - 1/(np.linalg.norm(self.res_kraft) + 1), 0.1)
-        
-        return verts, codes, color

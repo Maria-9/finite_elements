@@ -1,4 +1,7 @@
 
+import numpy as np
+import matplotlib.path as path
+
 from .ecke import ecke
 from .dynamische_ecke import dynamische_ecke
 from .statische_ecke import statische_ecke
@@ -6,6 +9,7 @@ from .kante import kante
 
 
 class p_ecke(ecke):
+    __class__ = ecke
     def verts_codes_color(self, size = 0.1):
         """ Gibt die Listen von Vertexes und Codes für das Plotten der Ecke mit Matplotlib zurück. """
         if self.dim != 2:
@@ -26,12 +30,13 @@ class p_ecke(ecke):
         return (verts, codes, (0, 0, 0))
 
 
-class p_dynamische_ecke(dynamische_ecke):
+class p_dynamische_ecke(dynamische_ecke, p_ecke):
+    __class__ = dynamische_ecke
     def verts_codes_color(self):
         """ Gibt die Vertexe und Kodes für das plotten mit Matplotlib zurück."""
     
         # verts, codes für den Punkt
-        verts, codes, color = self.verts_codes_color()
+        verts, codes, color = super().verts_codes_color()
         
         #verts, codes für den Pfeil
         länge_pfeil = 0.5
@@ -57,9 +62,10 @@ class p_dynamische_ecke(dynamische_ecke):
 
 
 class p_statische_ecke(statische_ecke, p_ecke):
+    __class__ = statische_ecke
     def verts_codes_color(self):
         """ Gibt die Vertexe und Kodes für das plotten mit Matplotlib zurück."""
-        verts, codes, color = self.verts_codes_color()
+        verts, codes, color = super().verts_codes_color()
         
         color = (0, 0, 0)
 
@@ -67,6 +73,7 @@ class p_statische_ecke(statische_ecke, p_ecke):
 
 
 class p_kante(kante):
+    __class__ = kante
     def verts_codes_color(self):
         """ Gibt die Vertexe und Kodes für das plotten mit Matplotlib zurück."""
         if self.ecke1.dim != 2 or self.ecke2.dim != 2:

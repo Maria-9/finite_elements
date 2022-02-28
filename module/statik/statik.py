@@ -55,7 +55,7 @@ class statik:
             
             vec = [list(), list()] # indizes, daten
             for e in [obj.ecke1, obj.ecke2]:
-                if type(e) != statische_ecke:
+                if e.__class__ != statische_ecke:
                     vec[0].extend([e.nummer * self.dim + i for i in range(self.dim)])
                     vec[1].extend(e.richtung_von(obj.gib_nachbar(e)))
 
