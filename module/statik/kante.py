@@ -1,6 +1,8 @@
 
 """ Eine Kante stellt die Kante im Graphen einer Finiten-Elemente Analyse dar."""
 
+from .nummeriert import nummeriert
+
 class kante(nummeriert):
 
     def __init__(self, ecke1, ecke2, statik, kraft_limit=28):
@@ -48,7 +50,7 @@ class kante(nummeriert):
                 + "\n Ecken: [" + str(self.ecke1.nummer) + ", " + str(self.ecke2.nummer) + "]")
             
     def verts_codes_color(self):
-         """ Gibt die Vertexe und Kodes für das plotten mit Matplotlib zurück."""
+        """ Gibt die Vertexe und Kodes für das plotten mit Matplotlib zurück."""
         if self.ecke1.dim != 2 or self.ecke2.dim != 2:
             raise Exception("Diese Funktion ist nur für 2-D Plots erstellt worden.")
         

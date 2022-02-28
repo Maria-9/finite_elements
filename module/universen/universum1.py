@@ -1,5 +1,5 @@
 
-from ..\statik import statik
+from ..statik.statik import statik
 import messagebox as msg
 
     
@@ -77,10 +77,3 @@ class universum1:
     def run(self):
         self.stat.berechne()
         self.plot()
-
-if __name__ == "__main__":
-    
-    msg.state("Start")
-    uni = universum1()
-    uni.run()
-    

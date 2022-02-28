@@ -2,6 +2,7 @@
 """ Ein Eckenobjekt repräsentiert eine Ecke im Graphen einer Finiten Elemente-Methode. """
 
 import numpy as np
+from .nummeriert import nummeriert
 
 class ecke(nummeriert):
 

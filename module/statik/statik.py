@@ -5,6 +5,7 @@
 import numpy as np
 from scipy.sparse.linalg import lsqr
 from messagebox import msg
+from .nummeriert import nummeriert
  
 class statik:
     
