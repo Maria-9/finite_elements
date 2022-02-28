@@ -1,6 +1,7 @@
 
 """ Eine Kante stellt die Kante im Graphen einer Finiten-Elemente Analyse dar."""
 
+from matplotlib import path
 from .nummeriert import nummeriert
 
 class kante(nummeriert):

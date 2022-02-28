@@ -6,9 +6,13 @@ import numpy as np
 from scipy.sparse.linalg import lsqr
 from messagebox import msg
 from .nummeriert import nummeriert
- 
+from .row_limited_csc import row_limited_csc
+from .dynamische_ecke import dynamische_ecke
+from .statische_ecke import statische_ecke
+from .kante import kante
+
 class statik:
-    
+
     """ 
     Beschreibung:
         Ein Statik Objekt führt Listen für alle zur Berechnung der Statik notwendigen Werte. Mittels einer Berechnungsfunktion lässt sich dann die aktuelle

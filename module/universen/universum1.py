@@ -1,5 +1,9 @@
 
 from ..statik.statik import statik
+from ..statik.matplot import matplot
+from ..statik.dynamische_ecke import dynamische_ecke
+from ..statik.statische_ecke import statische_ecke
+from ..statik.kante import kante
 import messagebox as msg
 
     

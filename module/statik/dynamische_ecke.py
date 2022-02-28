@@ -1,7 +1,10 @@
 
 """ Eine dynamische Ecke ist eine bewegliche Ecke in einem Statik-Objekt."""
 
-from . ecke import ecke 
+import numpy as np
+from matplotlib import path
+from . ecke import ecke
+
 
 class dynamische_ecke(ecke):
     

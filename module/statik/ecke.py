@@ -3,6 +3,7 @@
 
 import numpy as np
 from .nummeriert import nummeriert
+from matplotlib import path
 
 class ecke(nummeriert):
 
