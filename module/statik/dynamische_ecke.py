@@ -59,7 +59,7 @@ class dynamische_ecke(ecke):
                 + "\n Ansetzende Kraft: " + str(self.ansetzende_kraft)
                 + "\n Resultierende Kraft: " + str(self.resultierende_kraft))
     
-    def verts_codes_color(self):
+    '''def verts_codes_color(self):
         """ Gibt die Vertexe und Kodes für das plotten mit Matplotlib zurück."""
     
         # verts, codes für den Punkt
@@ -85,4 +85,4 @@ class dynamische_ecke(ecke):
         
         color = (0, 1 - 1/(np.linalg.norm(self.res_kraft) + 1), 0.1)
         
-        return verts, codes, color
+        return verts, codes, color'''

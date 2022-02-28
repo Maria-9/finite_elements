@@ -41,7 +41,7 @@ class ecke(nummeriert):
                 + "\n Position: " + str(self.position)
                 + "\n Kanten : " + str([k.nummer for k in self.kanten]))
 
-    def verts_codes(self, size = 0.1):
+    '''def verts_codes_color(self, size = 0.1):
         """ Gibt die Listen von Vertexes und Codes für das Plotten mit Matplotlib zurück. """
         if self.dim != 2:
             raise Exception("Diese Funktion ist nur für 2-D Plots erstellt worden.")
@@ -58,5 +58,5 @@ class ecke(nummeriert):
                 path.Path.LINETO,
                 path.Path.CLOSEPOLY]
         
-        return (verts, codes)
-
+        return (verts, codes, (0, 0, 0))
+    '''

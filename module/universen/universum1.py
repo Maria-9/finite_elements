@@ -1,9 +1,9 @@
 
 from ..statik.statik import statik
 from ..statik.matplot import matplot
-from ..statik.dynamische_ecke import dynamische_ecke
-from ..statik.statische_ecke import statische_ecke
-from ..statik.kante import kante
+from ..statik.plotable_inheritances import p_dynamische_ecke as dynamische_ecke
+from ..statik.plotable_inheritances import p_statische_ecke as statische_ecke
+from ..statik.plotable_inheritances import p_kante as kante
 import messagebox as msg
 
     
