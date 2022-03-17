@@ -72,14 +72,23 @@ class p_statische_ecke(statische_ecke, p_ecke):
         return verts, codes, color
 
 
-class p_kante(kante, ):
+class p_kante(kante):
     __class__ = kante
+    
+    def __init__(self, ecke1, ecke2, statik, kraft_limit=28, darstellung = 0):
+        """ darstellung = 0 zeichnet die Linie mittig, höhere Darstellungen zeichnen die Linie neben die Mittellinie."""
+        self.darstellung = darstellung
+        super().__init__(ecke1, ecke2, statik, kraft_limit=kraft_limit)
+
     def verts_codes_color(self):
         """ Gibt die Vertexe und Kodes für das plotten mit Matplotlib zurück."""
         if self.ecke1.dim != 2 or self.ecke2.dim != 2:
             raise Exception("Diese Funktion ist nur für 2-D Plots erstellt worden.")
         
-        verts = [self.ecke1.position, self.ecke2.position]
+        x = self.ecke1.position - self.ecke2.position
+        verschiebung = np.array([x[1], -x[0]])
+        verschiebung = verschiebung / np.linalg.norm(verschiebung) * self.darstellung * 0.05
+        verts = [self.ecke1.position, self.ecke2.position] + verschiebung
         
         codes = [path.Path.MOVETO,
                 path.Path.LINETO]

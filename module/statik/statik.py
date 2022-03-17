@@ -129,7 +129,7 @@ class statik:
         # Über diese könnte für jede Knotenkraft, die sich verändert hat, die Kanten ermittelt werden, über die eine Optimierung notwendig ist.
         
         erg = lsqr(self.struktur_matrix, - self.ecken_ans - self.struktur_matrix.dot(self.kanten_res),
-                       damp = 0, atol = 0.001, iter_lim = 1000, show = True)
+                       damp = 0, atol = 0.0001, iter_lim = 1000, show = True)
         dr = erg[0]
         self.kanten_res = dr + self.kanten_res
         self.ecken_res = self.struktur_matrix.dot(self.kanten_res) + self.ecken_ans
