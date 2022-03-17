@@ -72,7 +72,7 @@ class p_statische_ecke(statische_ecke, p_ecke):
         return verts, codes, color
 
 
-class p_kante(kante):
+class p_kante(kante, ):
     __class__ = kante
     def verts_codes_color(self):
         """ Gibt die Vertexe und Kodes für das plotten mit Matplotlib zurück."""
