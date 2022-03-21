@@ -4,16 +4,20 @@
 from matplotlib import path
 from .nummeriert import nummeriert
 from messagebox import msg
+import numpy as np
 
 class kante(nummeriert):
 
-    def __init__(self, ecke1, ecke2, statik, kraft_limit=20):
+    def __init__(self, ecke1, ecke2, statik, kraft_limit=20, elastizitätsmodul = 0.9):
         
         super().__init__()
         self.kraft_limit = kraft_limit
+        self.elastizitätsmodul = elastizitätsmodul
 
         self.ecke1 = ecke1
         self.ecke2 = ecke2
+
+        self.natürliche_länge = np.linalg.norm(ecke1.position - ecke2.position)
 
         self.ecke1.neue_kante(self)
         self.ecke2.neue_kante(self)
@@ -41,14 +45,25 @@ class kante(nummeriert):
     @res_kraft.setter
     def setze_res_kraft(self, res_kraft):
         self.statik.kanten_res[self.nummer] = res_kraft
+    
+    def gib_reale_kraft(self):
+        aktuelle_länge = np.linalg.norm(self.ecke1.position - self.ecke2.position)
+        
+        # Unter der Annahme eines linearen Verhältnisses von gestauchter Strecke zur aufgewendeten Kraft.
+        return self.elastizitätsmodul * (1 - aktuelle_länge / self.natürliche_länge)
+        
+        # Unter der Annahme eines antiproportionalen Verhältnisses von gestauchter Strecke zur aufgewendeten Kraft.
+        #return self.elastizitätsmodul * (self.natürliche_länge / aktuelle_länge - 1)
         
     def __del__(self):
         msg.info("Shall I get deleted?")
+        super().__del__()
+    
+    def delete(self, *objects):
+        msg.info("Entferne eine Kante")
         self.statik.exkludiere(self)
         self.ecke1.kanten.remove(self)
         self.ecke2.kanten.remove(self)
-        super().__del__()
-        
           
     def __str__(self):
         return (super().__str__()

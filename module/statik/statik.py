@@ -31,6 +31,8 @@ class statik:
         self.ecken_res = np.zeros(num_ecken*self.dim)   # die an den Eckpunkten resultierenden Kräfte nach der berechnung e_r = e_a + S * k_r
         self.kanten_res = np.zeros(num_kanten)          # die an den Kanten resultierenden Kräfte k_r = S^(-1) * e_a
         self.struktur_matrix = row_limited_csc.empty(2*self.dim, len(self.kanten_res), dtype=float)      # die Strukturmatrix.
+        
+        self.ecken_update = dict()   # wenn es Kräfte gibt, die auf eine Ecke wirken, so passt diese mit ihrer Update Methode ihren Zustand an.
   
     def inkludiere(self, obj : nummeriert):
         """ Setzt alle Parameter im Statik-Objekt um das Objekt 'obj' in Zukunft in die Berechnung der Statik mit einzubinden."""
@@ -46,6 +48,11 @@ class statik:
                 for array in [self.ecken_ans, self.ecken_res]:
                     if (np.array(array[obj.nummer*self.dim : (obj.nummer+1)*self.dim]) != [0]*self.dim).any():
                         msg.warning("Der Speicherplatz auf den die neue Ecke zugreift war ungleich 0.")
+            
+            # füge die Update Methode der Ecke hinzu.
+            if obj.nummer in self.ecken_update:
+                msg.warning("Die Update Methode einer Ecke wurde unerwartet durch eine andere Update Methode eier anderen ersetzt.")
+            self.ecken_update[obj.nummer] = obj.update
         
         # obj == Kante
         if obj.nummeriert_als(kante):
@@ -104,12 +111,16 @@ class statik:
             i = [obj.nummer * self.dim + i for i in range(self.dim)]
             self.ecken_ans[i] = [0] * self.dim  
             self.ecken_res[i] = [0] * self.dim
+            
+            if self.ecken_update.pop(obj.nummer, None) == None:
+                msg.warning("Es wurde eine Ecke exkluiert, von der keine Update-Methode bekannt war.")
 
         # obj == Kante
         if obj.nummeriert_als(kante):
             self.kanten_res[obj.nummer] = 0
             self.struktur_matrix.override(([0]*2*self.dim, [i for i in range(2*self.dim)]), obj.nummer) # Diese Zeile ist sehr wichtig.
 
+    
     def berechne(self):
         """ Funktionsweise:
         a := ecken_ans
@@ -137,3 +148,10 @@ class statik:
         msg.info("Statik Berechnung:\n" +
                    " Gestoppt bei Iteration: " + str(erg[2]) + "\n" +
                    " 1-Norm der Abweichung: " + str(erg[3]))
+        
+        msg.info("Anzahl der Ecken mit Ansätzenden Kräfte != 0: " + str(sum(self.ecken_res != 0)))
+
+        # Führe für jede Ecke auf die durch ecken_res eine Kraft wirkt ein Update durch
+        for obj_nummer in set(np.where(self.ecken_res != 0)[0] // self.dim):
+            self.ecken_update[obj_nummer]()
+            

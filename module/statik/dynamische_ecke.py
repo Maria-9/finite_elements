@@ -18,6 +18,8 @@ class dynamische_ecke(ecke):
         
         super().__init__(position)
         self.masse = None # Die Masse spielt erst bei Bewegungen eine Rolle
+        self.beschleunigung = np.zeros(len(position))
+        self.geschwindigkeit = np.zeros(len(position))
         
         if statik.dim != self.dim:
             raise ValueError("Ein " + statik.dim + " dimensionales Statik-Objekt kommt nicht mit einer " + self.dim + " dimensionalen Ecke zurecht.")
@@ -32,6 +34,13 @@ class dynamische_ecke(ecke):
     def __del__(self): 
         self.statik.exkludiere(self)
         super().__del__()
+    
+    def update(self):
+        # verrechne die Resultierenden Kräfte mit den realen Kräften und passe die Beschleunigung, die Geschwindigkeit und die Position an.
+        # Man denke daran, dass bei bestehender Geschwindigkeit, Beschleunigung oder einem Ungleichgewicht der von den Kanten wirkenden realen Kräfte
+        # im nächsten Schritt der Animation stets wieder ein Update für diese Ecke durchgeführt werden sollte. Man setzt dies am besten durch einen
+        # EventHandler um.
+        pass
     
     def __stat_sp(self):
         # Gibt den Speicherbereich für die Kräfte im Statik Objekt zurück.

@@ -17,9 +17,11 @@ class ecke(nummeriert):
         self.kanten = list()
     
     def __del__(self):
+        super().__del__()
+    
+    def delete(self):
         for k in self.kanten:
             k.__del__()
-        super().__del__()
     
     def neue_kante(self, kante):
 
@@ -36,7 +38,7 @@ class ecke(nummeriert):
         # gibt den Richtungsvektor zurück.
         x = self.position - andere_ecke.position
         return x / np.sqrt(x @ x)
-    
+        
     def __str__(self):
         return ("----------------------------"
                 + super().__str__() # dies ist die Nummerierung
