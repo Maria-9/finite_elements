@@ -3,10 +3,11 @@
 
 from matplotlib import path
 from .nummeriert import nummeriert
+from messagebox import msg
 
 class kante(nummeriert):
 
-    def __init__(self, ecke1, ecke2, statik, kraft_limit=28):
+    def __init__(self, ecke1, ecke2, statik, kraft_limit=20):
         
         super().__init__()
         self.kraft_limit = kraft_limit
@@ -44,7 +45,10 @@ class kante(nummeriert):
     def __del__(self):
         msg.info("Shall I get deleted?")
         self.statik.exkludiere(self)
+        self.ecke1.kanten.remove(self)
+        self.ecke2.kanten.remove(self)
         super().__del__()
+        
           
     def __str__(self):
         return (super().__str__()

@@ -17,6 +17,8 @@ class ecke(nummeriert):
         self.kanten = list()
     
     def __del__(self):
+        for k in self.kanten:
+            k.__del__()
         super().__del__()
     
     def neue_kante(self, kante):

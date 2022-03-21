@@ -75,7 +75,7 @@ class p_statische_ecke(statische_ecke, p_ecke):
 class p_kante(kante):
     __class__ = kante
     
-    def __init__(self, ecke1, ecke2, statik, kraft_limit=28, darstellung = 0):
+    def __init__(self, ecke1, ecke2, statik, kraft_limit=5, darstellung = 0):
         """ darstellung = 0 zeichnet die Linie mittig, höhere Darstellungen zeichnen die Linie neben die Mittellinie."""
         self.darstellung = darstellung
         super().__init__(ecke1, ecke2, statik, kraft_limit=kraft_limit)

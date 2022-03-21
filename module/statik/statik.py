@@ -50,7 +50,7 @@ class statik:
         # obj == Kante
         if obj.nummeriert_als(kante):
             
-            # berechne die Kräfteverteilung auf die Ecken 
+            # berechne die Kräfteverteilung auf die Ecken - bzw. die relative Verteilung
             # (- also die zur Kante gehörige Spalte in der Strukturmatrix.)
             
             vec = [list(), list()] # indizes, daten
@@ -108,7 +108,7 @@ class statik:
         # obj == Kante
         if obj.nummeriert_als(kante):
             self.kanten_res[obj.nummer] = 0
-            self.struktur_matrix.override(([0]*2*self.dim, [i for i in range(2*self.dim)])) # Diese Zeile ist sehr wichtig.
+            self.struktur_matrix.override(([0]*2*self.dim, [i for i in range(2*self.dim)]), obj.nummer) # Diese Zeile ist sehr wichtig.
 
     def berechne(self):
         """ Funktionsweise:

@@ -90,6 +90,11 @@ class universum2:
         
         self.ecken.extend(neue_ecken)
         
+        del self.kanten[self.höhe_turm*4 + 1]
+        #self.kanten[self.höhe_turm*4 + 1] = None
+        print("Deleted:")
+        #print(self.kanten[self.höhe_turm*4 + 1])
+        
 
     def plot(self):
         
