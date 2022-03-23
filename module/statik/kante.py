@@ -5,6 +5,7 @@ from matplotlib import path
 from .nummeriert import nummeriert
 from messagebox import msg
 import numpy as np
+import math
 
 class kante(nummeriert):
 
@@ -50,10 +51,22 @@ class kante(nummeriert):
         aktuelle_länge = np.linalg.norm(self.ecke1.position - self.ecke2.position)
         
         # Unter der Annahme eines linearen Verhältnisses von gestauchter Strecke zur aufgewendeten Kraft.
-        return self.elastizitätsmodul * (1 - aktuelle_länge / self.natürliche_länge)
+        #return self.elastizitätsmodul * (1 - aktuelle_länge / self.natürliche_länge)
         
         # Unter der Annahme eines antiproportionalen Verhältnisses von gestauchter Strecke zur aufgewendeten Kraft.
         #return self.elastizitätsmodul * (self.natürliche_länge / aktuelle_länge - 1)
+        
+        # Im wesentlichen ist eine Differentialgleichung gegeben:
+        #   l'(f) = (f * l(f)^2) / (V * E)  , wobei
+        #   l(f) Die Länge des Stabes bei einwirkender Kraft f ist
+        #   V das Volumen des Stabes, und
+        #   E das Elastizitätsmodul
+        #
+        # Wofram Alpha schlägt als Lösung f = sqrt( 2*E*V*(1 - L/l) ) vor, dies entspricht in etwa der Wurzel des obigen antiproportionalen Verhältnisses.
+        # Nehmen wir an, dass das Volumen eines Stabes proportional zu seiner Länge zunimmt ergibt sich
+        
+        antiprop = self.elastizitätsmodul * self.natürliche_länge * (self.natürliche_länge / aktuelle_länge - 1)
+        return math.sqrt(antiprop) if antiprop >= 0 else -math.sqrt(-antiprop)
         
     def __del__(self):
         msg.info("Shall I get deleted?")
