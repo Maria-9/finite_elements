@@ -4,7 +4,7 @@ class dynamik_events:
     
     def __init__(self, zukünftige_events : dynamik_events):
         self.kanten_real = set()
-        self.ecken_real = set()
+        self.ecken_real = set()     # Kann diese Menge von Funktionen ausgelassen werden?
         self.ecken_update = set()
         
         self.zukünftige_events = zukünftige_events

@@ -14,6 +14,8 @@ class kante(nummeriert):
         super().__init__()
         self.kraft_limit = kraft_limit
         self.elastizitätsmodul = elastizitätsmodul
+        self.__reale_kraft = 0    # diese Kraft wird für die Berechnung der Dynamik benötigt. Sie errechnet sich aus der durch die Stauchung oder 
+                                # Dehnung der Kante entstehenden Kraft auf die Eckpunkte der Kante.
 
         self.ecke1 = ecke1
         self.ecke2 = ecke2
@@ -47,14 +49,22 @@ class kante(nummeriert):
     def setze_res_kraft(self, res_kraft):
         self.statik.kanten_res[self.nummer] = res_kraft
     
-    def gib_reale_kraft(self):
+    @property
+    def reale_kraft(self):
+        return self.__reale_kraft
+    
+    def berechne_reale_kraft(self, aktuelle_events, tol = 0.1):
+        # Die Toleranz 'tol' gibt an, ab wann die Differenz zwischen der realen Kraft und
+        # der aus der aktuellen Stauchung der Kante entstehenden Kraft klein genug ist, damit die reale Kraft nicht angepasst wird.
+        # Hierzu wird diese Toleranz erst durch den Elastizitätsmodul und die natürliche Länge der Kante geteilt.
+        
         aktuelle_länge = np.linalg.norm(self.ecke1.position - self.ecke2.position)
         
         # Unter der Annahme eines linearen Verhältnisses von gestauchter Strecke zur aufgewendeten Kraft.
-        #return self.elastizitätsmodul * (1 - aktuelle_länge / self.natürliche_länge)
+        #neue_reale_kraft = self.elastizitätsmodul * (1 - aktuelle_länge / self.natürliche_länge)
         
         # Unter der Annahme eines antiproportionalen Verhältnisses von gestauchter Strecke zur aufgewendeten Kraft.
-        #return self.elastizitätsmodul * (self.natürliche_länge / aktuelle_länge - 1)
+        #neue_reale_kraft = self.elastizitätsmodul * (self.natürliche_länge / aktuelle_länge - 1)
         
         # Im wesentlichen ist eine Differentialgleichung gegeben:
         #   l'(f) = (f * l(f)^2) / (V * E)  , wobei
@@ -66,8 +76,15 @@ class kante(nummeriert):
         # Nehmen wir an, dass das Volumen eines Stabes proportional zu seiner Länge zunimmt ergibt sich
         
         antiprop = self.elastizitätsmodul * self.natürliche_länge * (self.natürliche_länge / aktuelle_länge - 1)
-        return math.sqrt(antiprop) if antiprop >= 0 else -math.sqrt(-antiprop)
+        neue_reale_kraft =  math.sqrt(antiprop) if antiprop >= 0 else -math.sqrt(-antiprop)
+        if abs(self.__reale_kraft - neue_reale_kraft) > tol / (self.elastizitätsmodul * self.natürliche_länge):
+            self.__reale_kraft = neue_reale_kraft
+            aktuelle_events.ecke_update.add(ecke1.update)
+            aktuelle_events.ecke_update.add(ecke2.update)
         
+        return self.__reale_kraft
+    
+    
     def __del__(self):
         msg.info("Shall I get deleted?")
         super().__del__()
