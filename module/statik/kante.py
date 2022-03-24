@@ -9,7 +9,7 @@ import math
 
 class kante(nummeriert):
 
-    def __init__(self, ecke1, ecke2, statik, kraft_limit=20, elastizitätsmodul = 0.9):
+    def __init__(self, ecke1, ecke2, statik, dynamik, kraft_limit=20, elastizitätsmodul = 0.9):
         
         super().__init__()
         self.kraft_limit = kraft_limit
@@ -27,7 +27,12 @@ class kante(nummeriert):
         
         self.statik = statik
         self.statik.inkludiere(self)
-
+        
+        self.dynamik = dynamik
+        self.dynamik.inkludiere(self)
+    
+    def revidiere_strukturmatrix(self):
+        self.statik.revidiere(self)
     
     def gib_nachbar(self, ecke):
         if ecke is self.ecke1:
@@ -77,13 +82,13 @@ class kante(nummeriert):
         
         antiprop = self.elastizitätsmodul * self.natürliche_länge * (self.natürliche_länge / aktuelle_länge - 1)
         neue_reale_kraft =  math.sqrt(antiprop) if antiprop >= 0 else -math.sqrt(-antiprop)
+        
         if abs(self.__reale_kraft - neue_reale_kraft) > tol / (self.elastizitätsmodul * self.natürliche_länge):
             self.__reale_kraft = neue_reale_kraft
-            aktuelle_events.ecke_update.add(ecke1.update)
-            aktuelle_events.ecke_update.add(ecke2.update)
+            aktuelle_events.ecken_update.add(self.ecke1.update)
+            aktuelle_events.ecken_update.add(self.ecke2.update)
         
         return self.__reale_kraft
-    
     
     def __del__(self):
         msg.info("Shall I get deleted?")

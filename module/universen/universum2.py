@@ -1,5 +1,6 @@
 
 from ..statik.statik import statik
+from ..statik.dynamik import dynamik
 from ..statik.matplot import matplot
 from ..statik.plotable_inheritances  import p_dynamische_ecke as dynamische_ecke
 from ..statik.plotable_inheritances  import p_statische_ecke as statische_ecke
@@ -23,23 +24,25 @@ class universum2:
         self.kanten = list()
         self.mplot = matplot()
         
+        self.dyn = dynamik()
+        
         #baue den Turm
         for i in range(höhe_turm*2):
             if i % 2 == 0:
-                e = dynamische_ecke((1, i / 2 + 1), self.stat)
+                e = dynamische_ecke((1, i / 2 + 1), self.stat, self.dyn)
             else:
-                e = dynamische_ecke((2, (i+1) / 2), self.stat)
+                e = dynamische_ecke((2, (i+1) / 2), self.stat, self.dyn)
             self.ecken.append(e)
         
         #setze Eckpunkt
-        self.ecken.append(dynamische_ecke((2, höhe_turm + 1), self.stat))
+        self.ecken.append(dynamische_ecke((2, höhe_turm + 1), self.stat, self.dyn))
         
         #baue nach rechts
         for i in range(2*länge_überhang):
             if i % 2 == 0:
-                e = dynamische_ecke((3 + i/2, höhe_turm), self.stat)
+                e = dynamische_ecke((3 + i/2, höhe_turm), self.stat, self.dyn)
             else:
-                e = dynamische_ecke((2 + (i+1)/2, höhe_turm + 1), self.stat)
+                e = dynamische_ecke((2 + (i+1)/2, höhe_turm + 1), self.stat, self.dyn)
             self.ecken.append(e)
         
         #setze zwei statischen Ecken am Boden
@@ -51,8 +54,8 @@ class universum2:
         #setze die Kanten
         for e in self.ecken:
             
-            self.kanten.append(kante(prev_2, e, self.stat))
-            self.kanten.append(kante(prev_1, e, self.stat))
+            self.kanten.append(kante(prev_2, e, self.stat, self.dyn))
+            self.kanten.append(kante(prev_1, e, self.stat, self.dyn))
             
             prev_2 = prev_1
             prev_1 = e
@@ -63,9 +66,9 @@ class universum2:
         # baue den zweiten Turm
         for i in range(self.höhe_turm*2 - 2):
             if i % 2 == 0:
-                e = dynamische_ecke((1 + self.länge_überhang, i / 2 + 1), self.stat)
+                e = dynamische_ecke((1 + self.länge_überhang, i / 2 + 1), self.stat, self.dyn)
             else:
-                e = dynamische_ecke((2 + self.länge_überhang, (i+1) / 2), self.stat)
+                e = dynamische_ecke((2 + self.länge_überhang, (i+1) / 2), self.stat, self.dyn)
             neue_ecken.append(e)
         
         #setze zwei statischen Ecken am Boden
@@ -77,16 +80,16 @@ class universum2:
         #setze die Kanten des zweiten Turmes
         for e in neue_ecken:
             
-            self.kanten.append(kante(prev_2, e, self.stat))
-            self.kanten.append(kante(prev_1, e, self.stat))
+            self.kanten.append(kante(prev_2, e, self.stat, self.dyn))
+            self.kanten.append(kante(prev_1, e, self.stat, self.dyn))
             
             prev_2 = prev_1
             prev_1 = e
         
         #setze die Verbindungskanten vom Überhang zum 2. Turm
-        self.kanten.append(kante(neue_ecken[-1], self.ecken[-2], self.stat))
-        self.kanten.append(kante(neue_ecken[-1], self.ecken[-4], self.stat))
-        self.kanten.append(kante(neue_ecken[-2], self.ecken[-4], self.stat))
+        self.kanten.append(kante(neue_ecken[-1], self.ecken[-2], self.stat, self.dyn))
+        self.kanten.append(kante(neue_ecken[-1], self.ecken[-4], self.stat, self.dyn))
+        self.kanten.append(kante(neue_ecken[-2], self.ecken[-4], self.stat, self.dyn))
         
         self.ecken.extend(neue_ecken)
         
@@ -103,5 +106,9 @@ class universum2:
 
     
     def run(self):
-        self.stat.berechne()
-        #self.plot()
+        for i in range(20):
+            self.stat.berechne()
+            self.dyn.durchlaufe_events(0.1)
+            self.plot()
+            self.mplot.pause(0.1)
+        plt.show()

@@ -12,7 +12,7 @@ class ecke(nummeriert):
     def __init__(self, position):
         super().__init__() # Gebe dem Objekt eine Nummer
         
-        self.position = np.array(position)
+        self.position = np.array(position, dtype=float)
         self.dim = len(position)
         self.kanten = list()
     
@@ -38,6 +38,10 @@ class ecke(nummeriert):
         # gibt den Richtungsvektor zurück.
         x = self.position - andere_ecke.position
         return x / np.sqrt(x @ x)
+    
+    def update(self, zukünftige_events, zeitänderung):
+        # Diese Funktion wird von der dynamischen Ecke überschrieben, in der statischen Ecke erfüllt sie keinen weiteren Sinn als da zu sein.
+        pass
         
     def __str__(self):
         return ("----------------------------"

@@ -98,8 +98,10 @@ class statik:
                 self.struktur_matrix.append((data, indices, indptr), fast=True)
 
             else:
-                if self.kanten_res[obj.nummer] != 0:
-                    msg.warning("Der Speicherplatz auf den die neue Kante zugreift war ungleich 0.")
+                # Ich kann leider nicht sagen, wie sinnvoll es ist diese Warnung nicht zu werfen. Werfen wir sie nicht, ist die inkludiere-Funktion 
+                # vielseitiger einsetzbar.
+                #if self.kanten_res[obj.nummer] != 0:
+                #    msg.warning("Der Speicherplatz auf den die neue Kante zugreift war ungleich 0.")
                 
                 # trage die Kräfteverteilung in die Strukturmatrix ein.
                 self.struktur_matrix.override((vec[1], vec[0]), obj.nummer)
@@ -120,6 +122,11 @@ class statik:
             self.kanten_res[obj.nummer] = 0
             self.struktur_matrix.override(([0]*2*self.dim, [i for i in range(2*self.dim)]), obj.nummer) # Diese Zeile ist sehr wichtig.
 
+    def revidiere(self, obj : nummeriert):
+        if obj.nummeriert_als(kante):
+            if len(self.kanten_res) <= obj.nummer:
+                raise Exception("Revidierung der Kante innerhalb der Statik ist fehlgeschlagen")
+            self.inkludiere(obj)
     
     def berechne(self):
         """ Funktionsweise:
@@ -151,7 +158,10 @@ class statik:
         
         msg.info("Anzahl der Ecken mit Ansätzenden Kräfte != 0: " + str(sum(self.ecken_res != 0)))
 
+        # Was passiert, wenn die Undates hier ignoriert werden, und wir die resultierenden Kräfte lediglich als Hintergrundinformation für die Update-
+        # Methode verwenden?
+
         # Führe für jede Ecke auf die durch ecken_res eine Kraft wirkt ein Update durch
-        for obj_nummer in set(np.where(self.ecken_res != 0)[0] // self.dim):
-            self.ecken_update[obj_nummer]()
+        #for obj_nummer in set(np.where(self.ecken_res != 0)[0] // self.dim):
+        #    self.ecken_update[obj_nummer]()
             
