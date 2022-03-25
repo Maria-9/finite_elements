@@ -97,18 +97,16 @@ class universum2:
         #self.kanten[self.höhe_turm*4 + 1] = None
         
 
-    def plot(self):
-        
-        for obj in [self.ecken, self.st_ecken, self.kanten]:
-            self.mplot.add(obj)
-        
-        self.mplot.show()
-
     
     def run(self):
-        for i in range(20):
-            self.stat.berechne()
-            self.dyn.durchlaufe_events(0.1)
-            self.plot()
-            self.mplot.pause(0.1)
-        plt.show()
+        for i in range(250):
+            for i in range(1):
+                self.stat.berechne()
+                self.dyn.durchlaufe_events(0.001)
+            
+            self.mplot.cla()
+            
+            for obj in [self.ecken, self.st_ecken, self.kanten]:
+                self.mplot.add(obj)
+            
+            self.mplot.draw(intervall=0.00000001)

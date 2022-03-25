@@ -147,16 +147,17 @@ class statik:
         # Über diese könnte für jede Knotenkraft, die sich verändert hat, die Kanten ermittelt werden, über die eine Optimierung notwendig ist.
         
         erg = lsqr(self.struktur_matrix, - self.ecken_ans - self.struktur_matrix.dot(self.kanten_res),
-                       damp = 0, atol = 0.0001, iter_lim = 1000, show = True)
+                       damp = 0, atol = 0.0001, iter_lim = 1000, show = False)
         dr = erg[0]
         self.kanten_res = dr + self.kanten_res
-        self.ecken_res = self.struktur_matrix.dot(self.kanten_res) + self.ecken_ans
+        self.ecken_res = self.struktur_matrix.dot(self.kanten_res) + self.ecken_ans 
+            # ecken_res wird in der Update Methode nicht verwendet
         
-        msg.info("Statik Berechnung:\n" +
-                   " Gestoppt bei Iteration: " + str(erg[2]) + "\n" +
-                   " 1-Norm der Abweichung: " + str(erg[3]))
+        #msg.info("Statik Berechnung:\n" +
+        #           " Gestoppt bei Iteration: " + str(erg[2]) + "\n" +
+        #           " 1-Norm der Abweichung: " + str(erg[3]))
         
-        msg.info("Anzahl der Ecken mit Ansätzenden Kräfte != 0: " + str(sum(self.ecken_res != 0)))
+        #msg.info("Anzahl der Ecken mit resultierenden Kräften != 0: " + str(sum(self.ecken_res != 0)))
 
         # Was passiert, wenn die Undates hier ignoriert werden, und wir die resultierenden Kräfte lediglich als Hintergrundinformation für die Update-
         # Methode verwenden?

@@ -12,16 +12,16 @@ class dynamische_ecke(ecke):
     def __init__(self, position, statik, dynamik, ans_kraft = "DEFAULT"):
         """ Im Statik-Objekt werden alle Kräfte der dynamischen Ecke gespeichert. Es gibt deinen Speicherplatz hierfür in der dynamischen_ecke selbst.
         """
-        if ans_kraft == "DEFAULT":
-            ans_kraft = [0 for i in position[0:-1]] + [-1]
-            
         
         super().__init__(position)
-        self.masse = 1 # Die Masse spielt erst bei Bewegungen eine Rolle
+        self.masse = 0.1 # Die Masse spielt erst bei Bewegungen eine Rolle
         self.beschleunigung = np.zeros(len(position))
         self.geschwindigkeit = np.zeros(len(position))
+        self.ignorierte_kraft = 0
         
-        self.damp_of_real = 0.9
+        if ans_kraft == "DEFAULT":
+            ans_kraft = np.array([0 for i in position[0:-1]] + [-1]) * self.masse
+        
         self.dynamik = dynamik # Eigentlich sollte dieses Objekt hier nicht weiter benötigt werden.
         self.dynamik.inkludiere(self)
         
@@ -46,11 +46,25 @@ class dynamische_ecke(ecke):
         # EventHandler um.
         
         # Schritt 1: Berechne die neuen Werte
-        kraft = self.damp_of_real * self.res_kraft + (1 - self.damp_of_real) * self.reale_kraft
+        kraft = self.wirkende_kraft
+        if sum(kraft**2) <= self.ignorierte_kraft**2:
+            kraft = np.array([0.0, 0.0])
+
+         
+        self.beschleunigung = kraft / self.masse * 4
         
-        self.beschleunigung += kraft / self.masse
+        if np.linalg.norm(self.beschleunigung) >= 1.5 / self.masse:
+            self.beschleunigung *= 0.25
+        
+        
         self.geschwindigkeit += self.beschleunigung * zeitänderung
-        self.position += self.geschwindigkeit * zeitänderung
+        
+        if np.linalg.norm(self.geschwindigkeit) >= 0.5:
+            self.geschwindigkeit *= 0.1
+        
+        self.position += self.geschwindigkeit * zeitänderung   
+        
+        self.geschwindigkeit *= 0.98   # Dämpfung für bessere Konvergenz
         
         
         # Schritt 2: Setze Werte für die nächste Berechnung der Statik
@@ -59,7 +73,7 @@ class dynamische_ecke(ecke):
             k.revidiere_strukturmatrix()
         
         #Schritt 3: Stelle sicher, dass bei Bedarf weitere Updates der Ecke und ihrer Kanten durchgeführt werden.
-        if (kraft != 0).any() or self.beschleunigung != 0 or self.geschwindigkeit != 0:
+        if (kraft != 0).any() or (self.beschleunigung != 0).any() or (self.geschwindigkeit != 0).any():
             zukünftige_events.kanten_real |= {k.berechne_reale_kraft for k in self.kanten}
             zukünftige_events.ecken_update.add(self.update)
     
@@ -86,6 +100,10 @@ class dynamische_ecke(ecke):
     @property
     def reale_kraft(self):
         return sum([k.reale_kraft * self.richtung_von(k.gib_nachbar(self)) for k in self.kanten]) + self.ans_kraft
+    
+    @property
+    def wirkende_kraft(self):
+        return sum([k.wirkende_kraft * self.richtung_von(k.gib_nachbar(self)) for k in self.kanten]) + self.ans_kraft
 
     def __str__(self):
         return (super().__str__()

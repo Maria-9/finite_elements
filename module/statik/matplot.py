@@ -27,12 +27,15 @@ class matplot:
                                     edgecolor=color, alpha=0.5)
             self.ax.add_patch(patch)
     
-    def show(self, wait=0):
+    def draw(self, intervall=0.5):
         self.ax.set_xlim(0, self.shape[0])
         self.ax.set_ylim(0, self.shape[1])
 
         plt.draw()
-
-    def pause(self, intervall):
         plt.pause(intervall)
-        plt.clf()
+
+    def show(self):
+        plt.show()
+    
+    def cla(self):
+        plt.cla()
