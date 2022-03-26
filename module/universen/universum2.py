@@ -6,6 +6,7 @@ from ..statik.plotable_inheritances  import p_dynamische_ecke as dynamische_ecke
 from ..statik.plotable_inheritances  import p_statische_ecke as statische_ecke
 from ..statik.plotable_inheritances  import p_kante as kante
 import messagebox as msg
+import time
 
     
 class universum2:
@@ -99,14 +100,16 @@ class universum2:
 
     
     def run(self):
-        for i in range(250):
-            for i in range(1):
+        for i in range(2):
+            for i in range(400):
+                
                 self.stat.berechne()
                 self.dyn.durchlaufe_events(0.001)
+                
             
             self.mplot.cla()
             
             for obj in [self.ecken, self.st_ecken, self.kanten]:
                 self.mplot.add(obj)
             
-            self.mplot.draw(intervall=0.00000001)
+            self.mplot.draw(intervall=0.01)
