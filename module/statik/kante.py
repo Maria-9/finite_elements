@@ -29,7 +29,7 @@ class kante(nummeriert):
         self.statik = statik
         self.statik.inkludiere(self)
         
-        self.fe_support = 1
+        self.fe_support = 0
         self.dynamik = dynamik
         self.dynamik.inkludiere(self)
     
@@ -126,7 +126,7 @@ class kante(nummeriert):
     @property
     def wirkende_kraft(self):
         return (self.fe_support)*(self.reale_kraft + (self.reale_kraft - 2*self.res_kraft)) + (1 - self.fe_support) * self.reale_kraft
-        #return self.reale_kraft + 2*(self.reale_kraft - 2*self.res_kraft) Der zusammenziehende Effekt hat nicht funktioniert.
+        #return self.reale_kraft +(self.reale_kraft - 2*self.res_kraft) #Der zusammenziehende Effekt hat nicht funktioniert.
     
     def __del__(self):
         msg.info("Shall I get deleted?")
