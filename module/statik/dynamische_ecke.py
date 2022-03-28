@@ -17,8 +17,6 @@ class dynamische_ecke(ecke):
         self.masse = 0.1 # Die Masse spielt erst bei Bewegungen eine Rolle
         self.beschleunigung = np.zeros(len(position))
         self.geschwindigkeit = np.zeros(len(position))
-        self.ignorierte_kraft = 0
-        self.continuation = 0
         
         if ans_kraft == "DEFAULT":
             ans_kraft = np.array([0 for i in position[0:-1]] + [-1]) * self.masse
@@ -40,53 +38,38 @@ class dynamische_ecke(ecke):
         self.statik.exkludiere(self)
         super().__del__()
     
-    def update(self, zukünftige_events, zeitänderung):
+    def update(self, zukünftige_events, zeitänderung, fe_sup):
         # verrechne die Resultierenden Kräfte mit den realen Kräften und passe die Beschleunigung, die Geschwindigkeit und die Position an.
         # Man denke daran, dass bei bestehender Geschwindigkeit, Beschleunigung oder einem Ungleichgewicht der von den Kanten wirkenden realen Kräfte
         # im nächsten Schritt der Animation stets wieder ein Update für diese Ecke durchgeführt werden sollte. Man setzt dies am besten durch einen
         # EventHandler um.
         
         # Schritt 1: Berechne die neuen Werte
-        trä_kraft = self.wirkende_kraft
+        trä_kraft = self.wirkende_kraft(fe_sup)
         bew_kraft = self.bew_kraft
-        if sum(trä_kraft**2) <= self.ignorierte_kraft**2:
-            kraft = np.array([0.0, 0.0])
         
         # Bewegung
         self.beschleunigung_bew = bew_kraft / self.masse
         alte_beschleunigung = self.beschleunigung
         self.beschleunigung = trä_kraft / self.masse
-        #print("----")
-        #print(self.beschleunigung)
-        #if sum(self.geschwindigkeit * self.beschleunigung) <= 0:
-        #    self.geschwindigkeit = [0.0, 0.0]
-        if sum(self.geschwindigkeit * self.beschleunigung) >= sum(self.beschleunigung * self.beschleunigung) * zeitänderung and np.linalg.norm(self.geschwindigkeit) <= 2:
-            self.geschwindigkeit += self.beschleunigung * zeitänderung * 3
+        
+        if (sum(self.geschwindigkeit * self.beschleunigung)**2 ) >= (sum(self.beschleunigung **2) * sum(self.geschwindigkeit **2)) * 0.95:
+            self.geschwindigkeit *= 1.04
+        if (sum(self.geschwindigkeit * self.beschleunigung) ) <= - np.sqrt((sum(self.beschleunigung **2) * sum(self.geschwindigkeit **2)) * 0.9):
+            self.geschwindigkeit *= 0.96
+            
         self.geschwindigkeit += self.beschleunigung * zeitänderung
         self.position += self.geschwindigkeit * zeitänderung #* np.sqrt(1 + 3*max(sum(alte_beschleunigung * self.beschleunigung) / sum(self.beschleunigung**2), 3))
-        self.geschwindigkeit *= 0.98
-        #else:
-        #    self.geschwindigkeit *= 1.02
-        #if np.linalg.norm(bew_kraft) >= 0.1:
-        #    self.geschwindigkeit *= 0.9 #(1 - 0.2*zeitänderung)   # Dämpfung für realistische Animation
-        if np.linalg.norm(self.geschwindigkeit) >= 1:
-            self.geschwindigkeit *= 0.5
+        self.geschwindigkeit *= 0.985
+
+        if np.linalg.norm(trä_kraft) >= 1:
+            self.geschwindigkeit *= 0.9
         
         
         # Versetzung durch die träge Kraft
         if (trä_kraft != np.nan).all():
-            #print(trä_kraft)
             versetzung = (trä_kraft / self.masse * zeitänderung) * zeitänderung
             versetzung = np.minimum(np.maximum(versetzung, -2), 2)
-            #versetzung = self.geschwindigkeit * zeitänderung * sum(alte_beschleunigung * self.beschleunigung) / sum(self.beschleunigung**2)
-            #if sum(alte_beschleunigung * self.beschleunigung) >= sum(self.beschleunigung**2) * 0:
-                #self.continuation += 1
-                #if self.continuation >= 100:
-            #    versetzung += 0.2 * self.geschwindigkeit * zeitänderung
-            #else:
-            #    self.continuation = 0
-            # versetzung = (sum([k.versetzung / 2 * self.richtung_von(k.gib_nachbar(self)) for k in self.kanten])) 
-            #print("---" + str(np.linalg.norm(versetzung)))
             self.position += versetzung
         
         # Schritt 2: Setze Werte für die nächste Berechnung der Statik
@@ -95,7 +78,7 @@ class dynamische_ecke(ecke):
             k.revidiere_strukturmatrix()
         
         #Schritt 3: Stelle sicher, dass bei Bedarf weitere Updates der Ecke und ihrer Kanten durchgeführt werden.
-        if (self.res_kraft != 0).any() or (trä_kraft != 0).any() or (self.beschleunigung != 0).any() or (self.geschwindigkeit != 0).any():
+        if (sum(trä_kraft**2) >= 0.05**2).any() or (sum(self.geschwindigkeit**2) >= (0.05 / self.masse * zeitänderung)**2).any(): #or (self.res_kraft != 0).any():
             zukünftige_events.kanten_real |= {k.berechne_reale_kraft for k in self.kanten}
             zukünftige_events.ecken_update.add(self.update)
             # Der Term '(self.res_kraft != 0).any()' sollte in das Statik-Modul verschoben werden.
@@ -133,9 +116,8 @@ class dynamische_ecke(ecke):
     def reale_kraft(self):
         return sum([k.reale_kraft * self.richtung_von(k.gib_nachbar(self)) for k in self.kanten]) + self.ans_kraft
     
-    @property
-    def wirkende_kraft(self):
-        return sum([k.wirkende_kraft * self.richtung_von(k.gib_nachbar(self)) for k in self.kanten]) + (1 - self.kanten[0].fe_support) * self.ans_kraft
+    def wirkende_kraft(self, fe_support):
+        return sum([k.wirkende_kraft(fe_support) * self.richtung_von(k.gib_nachbar(self)) for k in self.kanten]) + (1 - fe_support) * self.ans_kraft
 
     def __str__(self):
         return (super().__str__()

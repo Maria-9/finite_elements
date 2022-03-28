@@ -44,7 +44,7 @@ class p_dynamische_ecke(dynamische_ecke, p_ecke):
         norm = np.linalg.norm(kraft)
         #print(norm)
         länge_pfeil = 0.7 * norm * 10
-        if  norm > self.ignorierte_kraft:
+        if  True:
             scal = kraft/norm
             verts.append(self.position)
             verts.append(self.position + scal * länge_pfeil)

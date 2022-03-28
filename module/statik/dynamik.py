@@ -12,11 +12,15 @@ class dynamik:
     def __init__(self):
         self.aktuelle_events = dynamik_events(dynamik_events(None))
     
-    def durchlaufe_events(self, zeitänderung):
-        self.aktuelle_events.durchlaufe_events(zeitänderung)
+    def durchlaufe_events(self, zeitänderung, fe_support=0):
+        self.aktuelle_events.durchlaufe_events(zeitänderung, fe_support)
         
+        self.aktuelle_events.zukünftige_events.kanten_res |= self.aktuelle_events.kanten_res
         self.aktuelle_events = self.aktuelle_events.zukünftige_events
         self.aktuelle_events.zukünftige_events = dynamik_events(None)
+    
+    def setze_kanten_res(self):
+        self.aktuelle_events.setze_kanten_res()
     
     def inkludiere(self, obj):
         # Da die Nummerierung eigentlich für die statik-Klasse gedacht war, ist die Frage ob es nicht schöner wäre eine eigene Funktion als Typprüfung zu verwenden.

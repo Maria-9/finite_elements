@@ -100,16 +100,23 @@ class universum2:
 
     
     def run(self):
-        for i in range(400):
-            for i in range(1):
-                
-                self.stat.berechne()
-                self.dyn.durchlaufe_events(0.001)
-                
+        durchläufe = 0
+        n = 20
+        t = time.time()
+        while len(self.dyn.aktuelle_events.ecken_update) > 0:
+            self.dyn.setze_kanten_res()
+            self.stat.berechne()
+            for i in range(n):
+                self.dyn.durchlaufe_events(0.001, fe_support = (n - i) / n)
+            durchläufe += n  
+        print("Zeit: ")
+        print(time.time() - t)
+        
+        self.mplot.cla()
             
-            self.mplot.cla()
+        for obj in [self.ecken, self.st_ecken, self.kanten]:
+            self.mplot.add(obj)
             
-            for obj in [self.ecken, self.st_ecken, self.kanten]:
-                self.mplot.add(obj)
-            
-            self.mplot.draw(intervall=0.01)
+        self.mplot.draw(intervall=0.01)
+        print("Durchläufe: ")
+        print(durchläufe)

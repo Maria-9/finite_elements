@@ -29,7 +29,6 @@ class kante(nummeriert):
         self.statik = statik
         self.statik.inkludiere(self)
         
-        self.fe_support = 0
         self.dynamik = dynamik
         self.dynamik.inkludiere(self)
     
@@ -70,7 +69,7 @@ class kante(nummeriert):
         # Unter der Annahme eines Linearen Verhältnisses:
         #return (1 - kraft / self.elastizitätsmodul) * self.natürliche_länge
     
-    def berechne_reale_kraft(self, aktuelle_events, tol = 0.1):
+    def berechne_reale_kraft(self, aktuelle_events, tol = 10):
         # Die Toleranz 'tol' gibt an, ab wann die Differenz zwischen der realen Kraft und
         # der aus der aktuellen Stauchung der Kante entstehenden Kraft klein genug ist, damit die reale Kraft nicht angepasst wird.
         # Hierzu wird diese Toleranz erst durch den Elastizitätsmodul und die natürliche Länge der Kante geteilt.
@@ -108,7 +107,7 @@ class kante(nummeriert):
         
         if abs(self.__reale_kraft - neue_reale_kraft) > tol / (self.elastizitätsmodul * self.natürliche_länge):
             self.__reale_kraft = neue_reale_kraft
-            self.setze_res_kraft = (self.__reale_kraft + self.setze_res_kraft) / 2
+            aktuelle_events.kanten_res.add(self.real_zu_res)
             aktuelle_events.ecken_update.add(self.ecke1.update)
             aktuelle_events.ecken_update.add(self.ecke2.update)
         
@@ -123,10 +122,11 @@ class kante(nummeriert):
     #def träge_kraft(self):
     #    return self.reale_kraft - self.res_kraft
     
-    @property
-    def wirkende_kraft(self):
-        return (self.fe_support)*(self.reale_kraft + (self.reale_kraft - 2*self.res_kraft)) + (1 - self.fe_support) * self.reale_kraft
-        #return self.reale_kraft +(self.reale_kraft - 2*self.res_kraft) #Der zusammenziehende Effekt hat nicht funktioniert.
+    def real_zu_res(self):
+        self.setze_res_kraft = self.reale_kraft
+    
+    def wirkende_kraft(self, fe_support):
+        return fe_support*(self.reale_kraft - self.res_kraft) + (1 - fe_support) * self.reale_kraft
     
     def __del__(self):
         msg.info("Shall I get deleted?")
