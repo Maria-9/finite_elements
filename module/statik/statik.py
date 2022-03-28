@@ -25,14 +25,15 @@ class statik:
         berechne()                      -> Berechnet die resultierende Kräfteverteilung, gegeben den ansetzenden Kräften.
     """
     
-    def __init__(self, num_ecken, num_kanten, dim = 2):
+    def __init__(self, num_ecken, num_kanten, dynamik, dim = 2):
         self.dim = dim                                  # die Dimension in der sich die Statik bewegt.
         self.ecken_ans = np.zeros(num_ecken*self.dim)   # die an den Eckpunkten ansetzenden Kräfte e_a
         self.ecken_res = np.zeros(num_ecken*self.dim)   # die an den Eckpunkten resultierenden Kräfte nach der berechnung e_r = e_a + S * k_r
         self.kanten_res = np.zeros(num_kanten)          # die an den Kanten resultierenden Kräfte k_r = S^(-1) * e_a
         self.struktur_matrix = row_limited_csc.empty(2*self.dim, len(self.kanten_res), dtype=float)      # die Strukturmatrix.
         
-        self.ecken_update = dict()   # wenn es Kräfte gibt, die auf eine Ecke wirken, so passt diese mit ihrer Update Methode ihren Zustand an.
+        self.dyn = dynamik
+        self.ecken_bewege = dict()   # wenn es Kräfte gibt, die auf eine Ecke wirken, so passt diese mit ihrer Bewege - Methode ihren Zustand an.
   
     def inkludiere(self, obj : nummeriert):
         """ Setzt alle Parameter im Statik-Objekt um das Objekt 'obj' in Zukunft in die Berechnung der Statik mit einzubinden."""
@@ -49,10 +50,10 @@ class statik:
                     if (np.array(array[obj.nummer*self.dim : (obj.nummer+1)*self.dim]) != [0]*self.dim).any():
                         msg.warning("Der Speicherplatz auf den die neue Ecke zugreift war ungleich 0.")
             
-            # füge die Update Methode der Ecke hinzu.
-            if obj.nummer in self.ecken_update:
-                msg.warning("Die Update Methode einer Ecke wurde unerwartet durch eine andere Update Methode eier anderen ersetzt.")
-            self.ecken_update[obj.nummer] = obj.update
+            # füge die Bewege- Methode der Ecke hinzu.
+            if obj.nummer in self.ecken_bewege:
+                msg.warning("Die Bewege- Methode einer Ecke wurde unerwartet durch eine andere Bewegungs- Methode eier anderen ersetzt.")
+            self.ecken_bewege[obj.nummer] = obj.bewege
         
         # obj == Kante
         if obj.nummeriert_als(kante):
@@ -114,8 +115,8 @@ class statik:
             self.ecken_ans[i] = [0] * self.dim  
             self.ecken_res[i] = [0] * self.dim
             
-            if self.ecken_update.pop(obj.nummer, None) == None:
-                msg.warning("Es wurde eine Ecke exkluiert, von der keine Update-Methode bekannt war.")
+            if self.ecken_bewege.pop(obj.nummer, None) == None:
+                msg.warning("Es wurde eine Ecke exkluiert, von der keine Beweges-Methode bekannt war.")
 
         # obj == Kante
         if obj.nummeriert_als(kante):
@@ -158,4 +159,9 @@ class statik:
         #           " Gestoppt bei Iteration: " + str(erg[2]) + "\n" +
         #           " 1-Norm der Abweichung: " + str(erg[3]))
         
-        #msg.info("Anzahl der Kanten mit veränderten resultierenden Kräften: " + str(sum((dr >= 0.05) + (dr <= -0.05))))    
+        #msg.info("Anzahl der Kanten mit veränderten resultierenden Kräften: " + str(sum((dr >= 0.05) + (dr <= -0.05))))
+
+        for i, v in enumerate(abs(self.ecken_res) >= 0.001):
+            if v == True:
+                self.dyn.ecken_bewege.add(self.ecken_bewege[i // self.dim])
+            

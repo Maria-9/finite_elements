@@ -7,13 +7,15 @@ from ..statik.plotable_inheritances  import p_statische_ecke as statische_ecke
 from ..statik.plotable_inheritances  import p_kante as kante
 import messagebox as msg
 import time
-
+from matplotlib import pyplot as plt
+import numpy as np
+import time
     
 class universum2:
     
     def __init__(self):
-        self.höhe_turm = 4
-        self.länge_überhang = 4
+        self.höhe_turm = 8
+        self.länge_überhang = 8
         höhe_turm = self.höhe_turm
         länge_überhang = self.länge_überhang
         num_ecken = 2*(höhe_turm + länge_überhang) + 1
@@ -109,7 +111,7 @@ class universum2:
         self.stat.berechne()
         for i in range(200):
             self.dyn.durchlaufe_events(0.001, fe_support=1)
-        while len(self.dyn.aktuelle_events.ecken_update) > 0:
+        while len(self.dyn.ecken_update) > 0:
             for i in range(100):
                 self.dyn.durchlaufe_events(0.001, fe_support=0)
             durchläufe += 100  
@@ -124,3 +126,36 @@ class universum2:
         self.mplot.draw(intervall=0.01)
         print("Durchläufe: ")
         print(durchläufe)
+        
+    
+    def run2(self):
+        durchläufe = 0
+        self.stat.berechne()
+        erg = np.array([k.res_kraft for k in self.kanten])
+        old = np.array([k.reale_kraft for k in self.kanten])
+        changes = list()
+        konv = list()
+        while len(self.dyn.ecken_update) > 0:
+            for i in range(30):
+                self.dyn.durchlaufe_events(0.001, fe_support=0)
+                new = np.array([k.reale_kraft for k in self.kanten])
+                changes.append(sum(abs(old - new)))
+                konv.append(sum(abs(erg - new)))
+                old = new
+            durchläufe += 30
+        
+            self.mplot.cla()
+            
+            for obj in [self.ecken, self.st_ecken, self.kanten]:
+                self.mplot.add(obj)
+            
+            self.mplot.draw(intervall=0.01)
+        print("Durchläufe: ")
+        print(durchläufe)
+        plt.figure()
+        plt.title("Delta")
+        plt.plot(changes)
+        plt.figure()
+        plt.title("Konvergenz")
+        plt.plot(konv)
+        plt.show()

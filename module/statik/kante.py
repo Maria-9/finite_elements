@@ -64,7 +64,7 @@ class kante(nummeriert):
         # Unter der Annahme eines Linearen Verhältnisses:
         #return (1 - kraft / self.elastizitätsmodul) * self.natürliche_länge
     
-    def berechne_reale_kraft(self, aktuelle_events, tol = 1):
+    def berechne_reale_kraft(self, dynamik, tol = 1):
         # Die Toleranz 'tol' gibt an, ab wann die Differenz zwischen der realen Kraft und
         # der aus der aktuellen Stauchung der Kante entstehenden Kraft klein genug ist, damit die reale Kraft nicht angepasst wird.
         # Hierzu wird diese Toleranz erst durch den Elastizitätsmodul und die natürliche Länge der Kante geteilt.
@@ -85,24 +85,28 @@ class kante(nummeriert):
         #
         # Wofram Alpha schlägt als Lösung f = sqrt( 2*E*V*(1 - L/l) ) vor, dies entspricht in etwa der Wurzel des obigen antiproportionalen Verhältnisses.
         # Nehmen wir an, dass das Volumen eines Stabes proportional zu seiner Länge zunimmt ergeben sich die folgenden Gleichungen.
-        # Zusätzlich verwenden wir die Wurzel lediglich für Werte >= 1, da somit auf Werten < 1 eine bessere Konvergenz erzielt wird.
+        # Zusätzlich verwenden wir die Wurzel lediglich für Werte >= delta, da somit auf Werten < delta eine bessere Konvergenz erzielt wird.
         
         antiprop = self.elastizitätsmodul * self.natürliche_länge * (self.natürliche_länge / aktuelle_länge - 1)
 
-        if antiprop >= 1:
-            neue_reale_kraft = math.sqrt(antiprop)
-        elif antiprop <= -1:
-            neue_reale_kraft = -math.sqrt(-antiprop)
-        else:
-            neue_reale_kraft = antiprop
+        neue_reale_kraft = antiprop
+        # Erfahrungswerte haben gezeigt, dass die Konvergenz besser funktioniert, je größer Delta  ist.
+        #delta = 2
+
+        #if antiprop >= delta:
+        #    neue_reale_kraft = math.sqrt(antiprop) * np.sqrt(delta)
+        #elif antiprop <= -delta:
+        #    neue_reale_kraft = -math.sqrt(-antiprop) * np.sqrt(delta)
+        #else:
+        #    neue_reale_kraft = antiprop
         
-        #neue_reale_kraft = max(min(neue_reale_kraft, self.__max_real), -self.__max_real)
+        #neue_reale_kraft = max(min(neue_reale_kraft, 5), -5)
         
         if abs(self.__reale_kraft - neue_reale_kraft) > tol / (self.elastizitätsmodul * self.natürliche_länge):
             self.__reale_kraft = neue_reale_kraft
-            aktuelle_events.kanten_rev.add(self.revidiere_statik)
-            aktuelle_events.ecken_update.add(self.ecke1.update)
-            aktuelle_events.ecken_update.add(self.ecke2.update)
+            dynamik.kanten_rev.add(self.revidiere_statik)
+            dynamik.ecken_update.add(self.ecke1.update)
+            dynamik.ecken_update.add(self.ecke2.update)
         
         return self.__reale_kraft
     

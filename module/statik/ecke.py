@@ -43,6 +43,9 @@ class ecke(nummeriert):
     def update(self, *args):
         # Diese Funktion wird von der dynamischen Ecke überschrieben, in der statischen Ecke erfüllt sie keinen weiteren Sinn als da zu sein.
         pass
+    
+    def bewege(self):
+        pass
         
     def __str__(self):
         return ("----------------------------"

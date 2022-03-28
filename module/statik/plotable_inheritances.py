@@ -40,7 +40,7 @@ class p_dynamische_ecke(dynamische_ecke, p_ecke):
         verts, codes, color = super().verts_codes_color()
         
         #verts, codes für den Pfeil
-        kraft = self.wirkende_kraft(0)
+        kraft = self.res_kraft
         norm = np.linalg.norm(kraft)
         #print(norm)
         länge_pfeil = 0.7 * norm * 10
@@ -97,7 +97,7 @@ class p_kante(kante):
                 path.Path.LINETO]
         
         color = [0, 0, 0] # RGB
-        kraft = self.reale_kraft
+        kraft = self.res_kraft
         if kraft > 0:
             color[0] = min(1, kraft / self.kraft_limit)
         else:
