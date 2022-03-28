@@ -58,12 +58,18 @@ class dynamische_ecke(ecke):
         self.beschleunigung = trä_kraft / self.masse
         #print("----")
         #print(self.beschleunigung)
+        #if sum(self.geschwindigkeit * self.beschleunigung) <= 0:
+        #    self.geschwindigkeit = [0.0, 0.0]
+        if sum(self.geschwindigkeit * self.beschleunigung) >= sum(self.beschleunigung * self.beschleunigung) * zeitänderung and np.linalg.norm(self.geschwindigkeit) <= 2:
+            self.geschwindigkeit += self.beschleunigung * zeitänderung * 3
         self.geschwindigkeit += self.beschleunigung * zeitänderung
-        self.position += self.geschwindigkeit * zeitänderung * np.sqrt(1 + 3*max(sum(alte_beschleunigung * self.beschleunigung) / sum(self.beschleunigung**2), 3))
+        self.position += self.geschwindigkeit * zeitänderung #* np.sqrt(1 + 3*max(sum(alte_beschleunigung * self.beschleunigung) / sum(self.beschleunigung**2), 3))
         self.geschwindigkeit *= 0.98
+        #else:
+        #    self.geschwindigkeit *= 1.02
         #if np.linalg.norm(bew_kraft) >= 0.1:
         #    self.geschwindigkeit *= 0.9 #(1 - 0.2*zeitänderung)   # Dämpfung für realistische Animation
-        if np.linalg.norm(bew_kraft) >= 1:
+        if np.linalg.norm(self.geschwindigkeit) >= 1:
             self.geschwindigkeit *= 0.5
         
         

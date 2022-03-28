@@ -100,8 +100,8 @@ class universum2:
 
     
     def run(self):
-        for i in range(2):
-            for i in range(400):
+        for i in range(400):
+            for i in range(1):
                 
                 self.stat.berechne()
                 self.dyn.durchlaufe_events(0.001)
