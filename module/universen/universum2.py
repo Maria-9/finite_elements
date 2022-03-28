@@ -100,15 +100,19 @@ class universum2:
 
     
     def run(self):
-        durchläufe = 0
-        n = 20
+        durchläufe = 300
+        n = 200
         t = time.time()
+        for i in range(100):
+            self.dyn.durchlaufe_events(0.001, fe_support=0)
+        self.dyn.rev_kanten_stat()
+        self.stat.berechne()
+        for i in range(200):
+            self.dyn.durchlaufe_events(0.001, fe_support=1)
         while len(self.dyn.aktuelle_events.ecken_update) > 0:
-            self.dyn.setze_kanten_res()
-            self.stat.berechne()
-            for i in range(n):
-                self.dyn.durchlaufe_events(0.001, fe_support = (n - i) / n)
-            durchläufe += n  
+            for i in range(100):
+                self.dyn.durchlaufe_events(0.001, fe_support=0)
+            durchläufe += 100  
         print("Zeit: ")
         print(time.time() - t)
         

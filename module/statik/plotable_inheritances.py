@@ -40,7 +40,7 @@ class p_dynamische_ecke(dynamische_ecke, p_ecke):
         verts, codes, color = super().verts_codes_color()
         
         #verts, codes für den Pfeil
-        kraft = self.wirkende_kraft
+        kraft = self.wirkende_kraft(0)
         norm = np.linalg.norm(kraft)
         #print(norm)
         länge_pfeil = 0.7 * norm * 10

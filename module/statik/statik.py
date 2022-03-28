@@ -123,6 +123,7 @@ class statik:
             self.struktur_matrix.override(([0]*2*self.dim, [i for i in range(2*self.dim)]), obj.nummer) # Diese Zeile ist sehr wichtig.
 
     def revidiere(self, obj : nummeriert):
+        """ verändere die Einträge in der Strukturmatrix, die die Richtungen zu den Ecken einer Kante angeben. """
         if obj.nummeriert_als(kante):
             if len(self.kanten_res) <= obj.nummer:
                 raise Exception("Revidierung der Kante innerhalb der Statik ist fehlgeschlagen")
@@ -157,13 +158,4 @@ class statik:
         #           " Gestoppt bei Iteration: " + str(erg[2]) + "\n" +
         #           " 1-Norm der Abweichung: " + str(erg[3]))
         
-        #msg.info("Anzahl der Ecken mit resultierenden Kräften != 0: " + str(sum(self.ecken_res != 0)))
-        #msg.info("Anzahl der kanten mit veränderten resultierenden Kräften: " + str(sum((dr >= 0.05) + (dr <= -0.05))))
-
-        # Was passiert, wenn die Undates hier ignoriert werden, und wir die resultierenden Kräfte lediglich als Hintergrundinformation für die Update-
-        # Methode verwenden?
-
-        # Führe für jede Ecke auf die durch ecken_res eine Kraft wirkt ein Update durch
-        #for obj_nummer in set(np.where(self.ecken_res != 0)[0] // self.dim):
-        #    self.ecken_update[obj_nummer]()
-            
+        #msg.info("Anzahl der Kanten mit veränderten resultierenden Kräften: " + str(sum((dr >= 0.05) + (dr <= -0.05))))    

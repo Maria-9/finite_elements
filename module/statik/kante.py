@@ -16,7 +16,6 @@ class kante(nummeriert):
         self.elastizitätsmodul = elastizitätsmodul
         self.__reale_kraft = 0    # diese Kraft wird für die Berechnung der Dynamik benötigt. Sie errechnet sich aus der durch die Stauchung oder 
                                 # Dehnung der Kante entstehenden Kraft auf die Eckpunkte der Kante.
-        #self.__max_real = 4
 
         self.ecke1 = ecke1
         self.ecke2 = ecke2
@@ -31,9 +30,6 @@ class kante(nummeriert):
         
         self.dynamik = dynamik
         self.dynamik.inkludiere(self)
-    
-    def revidiere_strukturmatrix(self):
-        self.statik.revidiere(self)
     
     def gib_nachbar(self, ecke):
         if ecke is self.ecke1:
@@ -60,8 +56,7 @@ class kante(nummeriert):
         return self.__reale_kraft
     
     def kraft_zu_länge(self, kraft):
-        # Umkehrfunktion zu berechne_reale_kraft 
-        #aktuelle_länge = np.linalg.norm(self.ecke1.position - self.ecke2.position)
+        """ Umkehrfunktion zu 'berechne_reale_kraft' """
         
         # Unter der Annahme eines Antiproportionalen Verhältnisses
         return self.natürliche_länge / (1 + kraft / self.elastizitätsmodul)
@@ -69,7 +64,7 @@ class kante(nummeriert):
         # Unter der Annahme eines Linearen Verhältnisses:
         #return (1 - kraft / self.elastizitätsmodul) * self.natürliche_länge
     
-    def berechne_reale_kraft(self, aktuelle_events, tol = 10):
+    def berechne_reale_kraft(self, aktuelle_events, tol = 1):
         # Die Toleranz 'tol' gibt an, ab wann die Differenz zwischen der realen Kraft und
         # der aus der aktuellen Stauchung der Kante entstehenden Kraft klein genug ist, damit die reale Kraft nicht angepasst wird.
         # Hierzu wird diese Toleranz erst durch den Elastizitätsmodul und die natürliche Länge der Kante geteilt.
@@ -77,12 +72,10 @@ class kante(nummeriert):
         aktuelle_länge = np.linalg.norm(self.ecke1.position - self.ecke2.position)
         
         # Unter der Annahme eines linearen Verhältnisses von gestauchter Strecke zur aufgewendeten Kraft.
-        #neue_reale_kraft = self.elastizitätsmodul * (1 - aktuelle_länge / self.natürliche_länge) 
-        #neue_reale_kraft = neue_reale_kraft**2 if neue_reale_kraft >= 0 else -(neue_reale_kraft**2)
+        #neue_reale_kraft = self.elastizitätsmodul * (1 - aktuelle_länge / self.natürliche_länge)
         
         # Unter der Annahme eines antiproportionalen Verhältnisses von gestauchter Strecke zur aufgewendeten Kraft.
         # neue_reale_kraft = self.elastizitätsmodul * (self.natürliche_länge / aktuelle_länge - 1)
-        # neue_reale_kraft = neue_reale_kraft**2 if neue_reale_kraft >= 0 else -(neue_reale_kraft**2)
         
         # Im wesentlichen ist eine Differentialgleichung gegeben:
         #   l'(f) = (f * l(f)^2) / (V * E)  , wobei
@@ -91,11 +84,11 @@ class kante(nummeriert):
         #   E das Elastizitätsmodul
         #
         # Wofram Alpha schlägt als Lösung f = sqrt( 2*E*V*(1 - L/l) ) vor, dies entspricht in etwa der Wurzel des obigen antiproportionalen Verhältnisses.
-        # Nehmen wir an, dass das Volumen eines Stabes proportional zu seiner Länge zunimmt ergibt sich
+        # Nehmen wir an, dass das Volumen eines Stabes proportional zu seiner Länge zunimmt ergeben sich die folgenden Gleichungen.
+        # Zusätzlich verwenden wir die Wurzel lediglich für Werte >= 1, da somit auf Werten < 1 eine bessere Konvergenz erzielt wird.
         
         antiprop = self.elastizitätsmodul * self.natürliche_länge * (self.natürliche_länge / aktuelle_länge - 1)
-        #print("###")
-        #print(antiprop)
+
         if antiprop >= 1:
             neue_reale_kraft = math.sqrt(antiprop)
         elif antiprop <= -1:
@@ -107,23 +100,16 @@ class kante(nummeriert):
         
         if abs(self.__reale_kraft - neue_reale_kraft) > tol / (self.elastizitätsmodul * self.natürliche_länge):
             self.__reale_kraft = neue_reale_kraft
-            aktuelle_events.kanten_res.add(self.real_zu_res)
+            aktuelle_events.kanten_rev.add(self.revidiere_statik)
             aktuelle_events.ecken_update.add(self.ecke1.update)
             aktuelle_events.ecken_update.add(self.ecke2.update)
         
         return self.__reale_kraft
     
-    #@property
-    #def versetzung(self):
-    #    aktuelle_länge = np.linalg.norm(self.ecke1.position - self.ecke2.position)
-    #    return (self.kraft_zu_länge(self.res_kraft) - aktuelle_länge)
     
-    #@property
-    #def träge_kraft(self):
-    #    return self.reale_kraft - self.res_kraft
-    
-    def real_zu_res(self):
-        self.setze_res_kraft = self.reale_kraft
+    def revidiere_statik(self):
+        self.setze_res_kraft = self.__reale_kraft
+        self.statik.revidiere(self)
     
     def wirkende_kraft(self, fe_support):
         return fe_support*(self.reale_kraft - self.res_kraft) + (1 - fe_support) * self.reale_kraft

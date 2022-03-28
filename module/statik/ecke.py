@@ -36,11 +36,11 @@ class ecke(nummeriert):
         self.kanten.remove(kante)
     
     def richtung_von(self, andere_ecke):
-        # gibt den Richtungsvektor zurück.
+        """ Gibt den Richtungsvektor von der anderen Ecke zu sich selbst zurück. """
         x = self.position - andere_ecke.position
         return x / np.sqrt(x @ x)
     
-    def update(self, zukünftige_events, zeitänderung):
+    def update(self, *args):
         # Diese Funktion wird von der dynamischen Ecke überschrieben, in der statischen Ecke erfüllt sie keinen weiteren Sinn als da zu sein.
         pass
         
