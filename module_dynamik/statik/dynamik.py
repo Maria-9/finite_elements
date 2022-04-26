@@ -1,7 +1,5 @@
 
-""" Dynamik --- dieses Modul wird in Zukunft neu geschrieben oder überarbeitet werden, sobald eine dynamik mit Objekten implementiert wird.
-
-    Bis dato steht diese Klasse auf dem Eis.
+""" Dynamik...
 """
 
 from .kante import kante

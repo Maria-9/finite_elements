@@ -12,7 +12,7 @@ class ecke(nummeriert):
     def __init__(self, position):
         super().__init__() # Gebe dem Objekt eine Nummer
         
-        # self.original_position = np.array(position, dtype=float)
+        self.original_position = np.array(position, dtype=float)
         self.position = np.array(position, dtype=float)
         self.dim = len(position)
         self.kanten = list()

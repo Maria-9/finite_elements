@@ -14,7 +14,7 @@ class kante(nummeriert):
         super().__init__()
         self.kraft_limit = kraft_limit
         self.elastizitätsmodul = elastizitätsmodul
-        self.__reale_kraft = 0  # diese Kraft wird für die Berechnung der Dynamik benötigt. Sie errechnet sich aus der durch die Stauchung oder 
+        self.__reale_kraft = 0    # diese Kraft wird für die Berechnung der Dynamik benötigt. Sie errechnet sich aus der durch die Stauchung oder 
                                 # Dehnung der Kante entstehenden Kraft auf die Eckpunkte der Kante.
 
         self.ecke1 = ecke1
@@ -57,7 +57,12 @@ class kante(nummeriert):
     
     def kraft_zu_länge(self, kraft):
         """ Umkehrfunktion zu 'berechne_reale_kraft' """
-        return (self.natürliche_länge / (1 + kraft / self.elastizitätsmodul))^2
+        
+        # Unter der Annahme eines Antiproportionalen Verhältnisses
+        return self.natürliche_länge / (1 + kraft / self.elastizitätsmodul)
+        
+        # Unter der Annahme eines Linearen Verhältnisses:
+        #return (1 - kraft / self.elastizitätsmodul) * self.natürliche_länge
     
     def berechne_reale_kraft(self, dynamik, tol = 1):
         # Die Toleranz 'tol' gibt an, ab wann die Differenz zwischen der realen Kraft und
@@ -65,6 +70,12 @@ class kante(nummeriert):
         # Hierzu wird diese Toleranz erst durch den Elastizitätsmodul und die natürliche Länge der Kante geteilt.
         
         aktuelle_länge = np.linalg.norm(self.ecke1.position - self.ecke2.position)
+        
+        # Unter der Annahme eines linearen Verhältnisses von gestauchter Strecke zur aufgewendeten Kraft.
+        #neue_reale_kraft = self.elastizitätsmodul * (1 - aktuelle_länge / self.natürliche_länge)
+        
+        # Unter der Annahme eines antiproportionalen Verhältnisses von gestauchter Strecke zur aufgewendeten Kraft.
+        # neue_reale_kraft = self.elastizitätsmodul * (self.natürliche_länge / aktuelle_länge - 1)
         
         # Im wesentlichen ist eine Differentialgleichung gegeben:
         #   l'(f) = (f * l(f)^2) / (V * E)  , wobei
@@ -74,20 +85,28 @@ class kante(nummeriert):
         #
         # Wofram Alpha schlägt als Lösung f = sqrt( 2*E*V*(1 - L/l) ) vor, dies entspricht in etwa der Wurzel des obigen antiproportionalen Verhältnisses.
         # Nehmen wir an, dass das Volumen eines Stabes proportional zu seiner Länge zunimmt ergeben sich die folgenden Gleichungen.
-        # Es ist denkbar die Wurzel zu Vernachlässigen, um bessere Performance zu erzielen.
+        # Zusätzlich verwenden wir die Wurzel lediglich für Werte >= delta, da somit auf Werten < delta eine bessere Konvergenz erzielt wird.
         
         antiprop = self.elastizitätsmodul * self.natürliche_länge * (self.natürliche_länge / aktuelle_länge - 1)
 
-        neue_reale_kraft = math.sqrt(antiprop)
+        neue_reale_kraft = antiprop
+        # Erfahrungswerte haben gezeigt, dass die Konvergenz besser funktioniert, je größer Delta  ist.
+        #delta = 2
+
+        #if antiprop >= delta:
+        #    neue_reale_kraft = math.sqrt(antiprop) * np.sqrt(delta)
+        #elif antiprop <= -delta:
+        #    neue_reale_kraft = -math.sqrt(-antiprop) * np.sqrt(delta)
+        #else:
+        #    neue_reale_kraft = antiprop
         
-        """ Dies wird lediglich für Bewegungen benötigt.
+        #neue_reale_kraft = max(min(neue_reale_kraft, 5), -5)
         
         if abs(self.__reale_kraft - neue_reale_kraft) > tol / (self.elastizitätsmodul * self.natürliche_länge):
             self.__reale_kraft = neue_reale_kraft
             dynamik.kanten_rev.add(self.revidiere_statik)
             dynamik.ecken_update.add(self.ecke1.update)
             dynamik.ecken_update.add(self.ecke2.update)
-        """
         
         return self.__reale_kraft
     
@@ -95,6 +114,9 @@ class kante(nummeriert):
     def revidiere_statik(self):
         self.setze_res_kraft = self.__reale_kraft
         self.statik.revidiere(self)
+    
+    def wirkende_kraft(self, fe_support):
+        return fe_support*(self.reale_kraft - self.res_kraft) + (1 - fe_support) * self.reale_kraft
     
     def __del__(self):
         msg.info("Shall I get deleted?")
