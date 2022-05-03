@@ -3,7 +3,7 @@
 
 import numpy as np
 from matplotlib import path
-from . ecke import ecke
+from .ecke import ecke
 
 
 class dynamische_ecke(ecke):
