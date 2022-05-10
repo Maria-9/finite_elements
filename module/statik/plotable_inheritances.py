@@ -33,6 +33,13 @@ class p_ecke(ecke):
 
 class p_dynamische_ecke(dynamische_ecke, p_ecke):
     __class__ = dynamische_ecke
+    
+    def __init__(self, position, *args):
+        dynamische_ecke.__init__(self, position, *args)
+        # Da 'p_ecke' lediglich den Konstruktor von 'ecke' verwendet, der wiederum von der dynamischen_ecke aufgerufen wird,
+        # kann,sollte und wird auf den Konstruktor von 'p_ecke' verzichtet.
+        print(self)
+    
     def verts_codes_color(self):
         """ Gibt die Vertexe und Kodes für das plotten mit Matplotlib zurück."""
     

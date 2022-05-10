@@ -32,8 +32,8 @@ class statik:
         self.kanten_res = np.zeros(num_kanten)          # die an den Kanten resultierenden Kräfte k_r = S^(-1) * e_a
         self.struktur_matrix = row_limited_csc.empty(2*self.dim, len(self.kanten_res), dtype=float)      # die Strukturmatrix.
         
-        self.dyn = dynamik
-        self.ecken_bewege = dict()   # wenn es Kräfte gibt, die auf eine Ecke wirken, so passt diese mit ihrer Bewege - Methode ihren Zustand an.
+        #self.dyn = dynamik
+        #self.ecken_bewege = dict()   # wenn es Kräfte gibt, die auf eine Ecke wirken, so passt diese mit ihrer Bewege - Methode ihren Zustand an.
   
     def inkludiere(self, obj : nummeriert):
         """ Setzt alle Parameter im Statik-Objekt um das Objekt 'obj' in Zukunft in die Berechnung der Statik mit einzubinden."""
@@ -51,9 +51,9 @@ class statik:
                         msg.warning("Der Speicherplatz auf den die neue Ecke zugreift war ungleich 0.")
             
             # füge die Bewege- Methode der Ecke hinzu.
-            if obj.nummer in self.ecken_bewege:
-                msg.warning("Die Bewege- Methode einer Ecke wurde unerwartet durch eine andere Bewegungs- Methode eier anderen ersetzt.")
-            self.ecken_bewege[obj.nummer] = obj.bewege
+            #if obj.nummer in self.ecken_bewege:
+            #    msg.warning("Die Bewege- Methode einer Ecke wurde unerwartet durch eine andere Bewegungs- Methode eier anderen ersetzt.")
+            #self.ecken_bewege[obj.nummer] = obj.bewege
         
         # obj == Kante
         if obj.nummeriert_als(kante):
@@ -115,8 +115,8 @@ class statik:
             self.ecken_ans[i] = [0] * self.dim  
             self.ecken_res[i] = [0] * self.dim
             
-            if self.ecken_bewege.pop(obj.nummer, None) == None:
-                msg.warning("Es wurde eine Ecke exkluiert, von der keine Beweges-Methode bekannt war.")
+            #if self.ecken_bewege.pop(obj.nummer, None) == None:
+            #    msg.warning("Es wurde eine Ecke exkluiert, von der keine Beweges-Methode bekannt war.")
 
         # obj == Kante
         if obj.nummeriert_als(kante):
@@ -161,7 +161,7 @@ class statik:
         
         #msg.info("Anzahl der Kanten mit veränderten resultierenden Kräften: " + str(sum((dr >= 0.05) + (dr <= -0.05))))
 
-        for i, v in enumerate(abs(self.ecken_res) >= 0.001):
-            if v == True:
-                self.dyn.ecken_bewege.add(self.ecken_bewege[i // self.dim])
+        #for i, v in enumerate(abs(self.ecken_res) >= 0.001):
+        #    if v == True:
+        #        self.dyn.ecken_bewege.add(self.ecken_bewege[i // self.dim])
             

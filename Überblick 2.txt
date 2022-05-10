@@ -1,0 +1,46 @@
+
+Überblick Dokument 2
+--------------------
+
+Architektonische																		Physikalische
+Elemente																				Phänomene
+----------------																		----------------
+								|			|
+								|			|	<----------------------------------------------------\
+								|			|														  |
+					(*)			|			|								(***)					  |
+kante				-------->	|	Sphäre	|								     /---->	statik		-/|
+					(*)			|			|	(**)		|			|	----/					  |
+dynamische_ecke		-------->	|			|	-------->	|	physik	|	----------> dynamik		-/|
+					(*)			|			|				|			|	----\					  |
+statische_ecke		-------->	|			|									 \---->	korrektur	-/
+
+
+(*) 	Speichern die für die Simulation benötiten Daten in der Sphäre.
+		Werden Daten geändert, so wird dies ausschließlich über die von der Sphäre vorgesehenen Funktionen getätigt.
+		Diese leiten die Informationen an die Physik-Klasse weiter, die dann wiederum diese Änderungen an die Sub-Module weiterleitet.
+	
+(**)	Die Physik-Klasse vermittelt die Daten-Änderungen aus der Sphäre an die einzelenen Sub-Module, die diese Datenänderungen benötigen
+		da sie auf diesen Daten beruhenden Datenstrukturen beinhalten.
+
+(***)	Die Sub-Module werden von der Physik-Klasse verwaltet und aufgerufen. Die Änderungen an Daten die von den Sub-Modulen ausgehen fließen
+		jedoch direkt in die Sphäre ein.
+
+Damit alle beteiligten Klassen problemlos ihren Beitrag zur Veränderung der Daten leisten können, erhalten alle Klassen eine Referenz auf das
+Sphären-Objekt selbst.
+
+
+
+Anmerkungen und Diskussion
+--------------------------
+
+Eine legitime Frage wäre, ob bei diesem Aufbau die Sphäre eine symmetrische Matrix, welche den Zusammenhang der Ecken über Kanten darstellt beinhaltet.
+Hierdurch wären die expliziten Daten in der Sphäre eine vollständige Charakteristik für das Gefüge der Architektonischen Elemente.
+ -> Solch eine Matrix würde erst dann implementiert werden, wenn sie von konkretem Nutzen wäre.
+
+Ein Architektonisches Element soll in der Form "[name](sphäre, attribute...)" erzeugt werden. So könnten später z.B. bei Kollisionen spezielle Kanten
+erzeugt werden. Jegliche Instanzen der Architektonischen Objekte werden ebenfalls in der Sphäre gespeichert, so dass keine eigene Instanz behalten werden muss.
+Eine Landschaftskreation muss also nicht von ihrer kreierenden Klasse gespeichert werden, sondern das kreierende Objekt kann nach der Kreation weggeworfen werden.
+Im wesentlichen vereinfacht dies den Quellcode für die bisherigen "Universen".
+
+Da sich statische Ecken bisher nicht in der Statik ein

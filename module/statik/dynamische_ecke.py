@@ -86,6 +86,6 @@ class dynamische_ecke(ecke):
     def __str__(self):
         return (super().__str__()
                 + "\n Masse : " + str(self.masse)
-                + "\n Ansetzende Kraft: " + str(self.ansetzende_kraft)
-                + "\n Resultierende Kraft: " + str(self.resultierende_kraft)
-                + "\n Wirkende Kraft: " + str(self.wirkende_kraft))
+                + "\n Ansetzende Kraft: " + str(self.ans_kraft)
+                + "\n Resultierende Kraft: " + str(self.res_kraft)
+                + "\n Reale Kraft: " + str(self.reale_kraft))
