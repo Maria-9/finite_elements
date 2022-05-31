@@ -4,10 +4,9 @@
 from .ecke import ecke 
 
 class statische_ecke(ecke):
-    # statische Ecken tragen sich nicht in der statik ein.
-    # statische Ecken dienen lediglich als Fixpunkte.
     
-    def __init__(self, position):
-        super().__init__(position)
+    def __init__(self, sphäre, position):
+        super().__init__(sphäre)
+        self.sphäre.stat_ecken_pos[self.spb] = position
 
 

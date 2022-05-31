@@ -9,36 +9,27 @@ from .ecke import ecke
 class dynamische_ecke(ecke):
     
     
-    def __init__(self, position, statik, dynamik, ans_kraft = "DEFAULT"):
+    def __init__(self, sphäre, position, ans_kraft = "DEFAULT"):
         """ Im Statik-Objekt werden alle Kräfte der dynamischen Ecke gespeichert. Es gibt deinen Speicherplatz hierfür in der dynamischen_ecke selbst.
         """
         
-        super().__init__(position)
-        self.masse = 1
-        self.beschleunigung = np.zeros(len(position))
-        self.geschwindigkeit = np.zeros(len(position))
+        super().__init__(sphäre)
         
+        self.sphäre.ecken_pos[self.spb] = position
+        self.sphäre.ecken_geschwindigkeit[self.spb] = np.zeros(len(position))  # Hier nicht wirklich nötig, darf jedoch keinen Fehler werden.
+        self.sphäre.ecken_beschleunigung[self.spb] = np.zeros(len(position))  # Das selbe gilt hierfür
+        self.sphäre.ecken_masse[self.nummer] = 1
+
         if ans_kraft == "DEFAULT":
             ans_kraft = np.array([0 for i in position[0:-1]] + [-1]) * self.masse
         
-        dynamik.inkludiere(self)
-        
-        if statik.dim != self.dim:
-            raise ValueError("Ein " + statik.dim + " dimensionales Statik-Objekt kommt nicht mit einer " + self.dim + " dimensionalen Ecke zurecht.")
-
-        self.statik = statik
-        self.statik.inkludiere(self)
-        
-        # Dies sind Attribute die auf den Speicher im Objekt self.statik zurückgreifen.
-        self.setze_ans_kraft = ans_kraft
-        self.setze_res_kraft = 0
+        self.sphäre.ecken_ans[self.spb] = ans_kraft
+        self.sphäre.ecken_res[self.spb] = [0] * self.sphäre.dim
     
-    def __del__(self): 
-        self.statik.exkludiere(self)
+    def __del__(self):
         super().__del__()
     
-    
-    def bewege(self, dynamik, zeitänderung):
+    #def bewege(self, dynamik, zeitänderung):
         """
         Sobald Bewegungen von Ecken implementiert werden bedarf diese Funktion einer Überarbeitung.
         
@@ -53,35 +44,46 @@ class dynamische_ecke(ecke):
         if (sum(self.mikro_geschwindigkeit**2) >= (0.01 / self.masse * zeitänderung)**2).any():
             dynamik.ecken_bewege.add(self.bewege)
         """
-        pass
+    #    pass
     
-    def update(self, *args):
+    #def update(self, *args):
         """ Update für Dynamik bzw. Events """
-        pass
-
-    def __stat_sp(self):
-        # Gibt den Speicherbereich für die Kräfte im Statik Objekt zurück.
-        return [self.nummer*self.dim + i for i in range(self.dim)]
+    #    pass
     
     @property
     def ans_kraft(self):
-        return self.statik.ecken_ans[self.__stat_sp()]
+        return self.sphäre.ecken_ans[self.spb()]
     
-    @ans_kraft.setter
-    def setze_ans_kraft(self, ans_kraft):
-        self.statik.ecken_ans[self.__stat_sp()] = ans_kraft
+    #def setze_ans_kraft(self, ans_kraft):
+    #    self.sphäre.ecken_ans[self.spb] = ans_kraft
         
     @property
     def res_kraft(self):
-        return self.statik.ecken_res[self.__stat_sp()]
+        return self.sphäre.ecken_res[self.spb()]
     
-    @res_kraft.setter
-    def setze_res_kraft(self, res_kraft):
-        self.statik.ecken_res[self.__stat_sp()] = res_kraft
+    #def setze_res_kraft(self, res_kraft):
+    #    self.sphäre.ecken_res[self.spb] = res_kraft
     
     @property
     def reale_kraft(self):
         return sum([k.reale_kraft * self.richtung_von(k.gib_nachbar(self)) for k in self.kanten]) + self.ans_kraft
+    
+    @property
+    def position(self):
+        return self.sphäre.ecken_pos[self.spb]
+    
+    @property
+    def geschwindigkeit(self):
+        return self.sphäre.ecken_geschwindigkeit[self.spb]
+    
+    @property
+    def beschleunigung(self):
+        self.sphäre.ecken_beschleunigung[self.spb]
+    
+    @property
+    def masse(self):
+        self.sphäre.ecken_masse[self.nummer]
+    
 
     def __str__(self):
         return (super().__str__()

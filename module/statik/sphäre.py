@@ -8,16 +8,26 @@ from .physik import physik
 class sphäre:
     
     def __init__(self):
-        self.dim = 0
+        self.dim = 2
         self.statische_ecken = dict()       # Nummer -> Element
         self.dynamische_ecken = dict()      # Nummer -> Element
         self.kanten = dict()                # Nummer -> Element
-    
+        
+        self.stat_ecken_pos = []
+        
         self.ecken_pos = []
         self.ecken_res = []
         self.ecken_ans = []
+        
+        self.ecken_geschwindigkeit = []
+        self.ecken_beschleunigung = []
+        self.ecken_masse = []
     
         self.kanten_res = []
+        
+        self.kanten_natürliche_länge = []
+        self.kanten_kraft_limit = []
+        self.kanten_elastizitätsmodul = []
         
         self.physik = physik()
     
@@ -44,6 +54,6 @@ class sphäre:
             ecken_res
             kanten_res
         
-        Eig.D.Struktur:
+        Eigene Datenstruktur:
             strukturmatrix : kanten_res * strukturmatrix  + ecken_ans = ecken_res
 """
