@@ -18,6 +18,7 @@ class matplot:
         self.shape = shape
 
     def add(self, objects):
+        # objects ist eien Liste von Funktion, die verts_codes_color implementiert haben. Alternativ könnte man dies durch eine Typprüfung kontrollieren.
         for obj in objects:
             if obj == None:
                 continue
@@ -26,7 +27,7 @@ class matplot:
             patch = patches.PathPatch(obj_path, facecolor=color,
                                     edgecolor=color, alpha=0.5)
             self.ax.add_patch(patch)
-    
+
     def draw(self, intervall=0.5):
         self.ax.set_xlim(0, self.shape[0])
         self.ax.set_ylim(0, self.shape[1])

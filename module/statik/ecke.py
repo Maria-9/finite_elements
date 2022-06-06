@@ -17,10 +17,6 @@ class ecke(nummeriert):
         self.sphäre = sphäre
         self.sphäre.inkludiere(self)
         self.kanten = list() # Es erscheint vorerst sinnvoll die Kanten im Objekt zu speichern. Es ist zu Bedenken diese Informationen in der Sphäre zu Speichern.
-    
-    def __del__(self):
-        self.sphäre.exkludiere(self)
-        super().__del__()
 
     @abc.abstractproperty 
     def position(self):
@@ -39,7 +35,7 @@ class ecke(nummeriert):
 
     def delete(self):
         for k in self.kanten:
-            k.__del__()
+            k.delete()
         self.sphäre.exkludiere(self)
 
     def neue_kante(self, kante):

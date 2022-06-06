@@ -92,7 +92,7 @@ class p_kante(kante):
 
     def verts_codes_color(self):
         """ Gibt die Vertexe und Kodes für das plotten mit Matplotlib zurück."""
-        if self.ecke1.dim != 2 or self.ecke2.dim != 2:
+        if self.sphäre.dim != 2:
             raise Exception("Diese Funktion ist nur für 2-D Plots erstellt worden.")
         
         x = self.ecke1.position - self.ecke2.position
