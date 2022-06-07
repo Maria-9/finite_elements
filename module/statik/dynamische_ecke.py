@@ -13,18 +13,19 @@ class dynamische_ecke(ecke):
         """ Im Statik-Objekt werden alle Kräfte der dynamischen Ecke gespeichert. Es gibt deinen Speicherplatz hierfür in der dynamischen_ecke selbst.
         """
         
-        super().__init__(sphäre)
-        
-        self.sphäre.ecken_pos[self.spb] = position
-        self.sphäre.ecken_geschwindigkeit[self.spb] = np.zeros(len(position))  # Hier nicht wirklich nötig, darf jedoch keinen Fehler werden.
-        self.sphäre.ecken_beschleunigung[self.spb] = np.zeros(len(position))  # Das selbe gilt hierfür
-        self.sphäre.ecken_masse[self.nummer] = 1
-
+        super().__init__(sphäre)    # Gebe dem Objekt eine Nummer
+                                    # Inkludiere die Ecke in der Sphäre
+                                    # Erstelle self.kanten
         if ans_kraft == "DEFAULT":
             ans_kraft = np.array([0 for i in position[0:-1]] + [-1]) * self.masse
         
         self.sphäre.ecken_ans[self.spb] = ans_kraft
         self.sphäre.ecken_res[self.spb] = [0] * self.sphäre.dim
+        self.sphäre.ecken_pos[self.spb] = position
+        
+        self.sphäre.ecken_geschwindigkeit[self.spb] = np.zeros(len(position))  # Hier nicht wirklich nötig, darf jedoch keinen Fehler werden.
+        self.sphäre.ecken_beschleunigung[self.spb] = np.zeros(len(position))  # Das selbe gilt hierfür
+        self.sphäre.ecken_masse[self.nummer] = 1
     
     def __del__(self):
         super().__del__()

@@ -20,6 +20,7 @@ class statik:
     
     
     Öffentliche Methoden:
+        [Nicht mehr aktuell]
         inkludiere(obj : nummeriert)    -> Fügt Zeiger die wirkenden Kräfte von obj. hinzu.
         exkludiere(obj : nummeriert)    -> Entfernt alle Daten/Referenzen im Statik-Objekt, die mit dem Objekt verbunden sind.
         berechne()                      -> Berechnet die resultierende Kräfteverteilung, gegeben den ansetzenden Kräften.
@@ -37,84 +38,62 @@ class statik:
                   
         self.struktur_matrix = row_limited_csc.empty(2*self.dim, len(self.sphäre.kanten_res), dtype=float)      # die Strukturmatrix S.
   
-    def inkludiere(self, obj : nummeriert):
-        """ Setzt alle Parameter im Statik-Objekt um das Objekt 'obj' in Zukunft in die Berechnung der Statik mit einzubinden."""
+    def inkludiere_kante(self, kante):
+        """ Setzt alle Parameter im Statik-Objekt um die Kante 'kante' in Zukunft in die Berechnung der Statik mit einzubinden."""
         
+        # berechne die Kräfteverteilung auf die Ecken - bzw. die relative Verteilung
+        # (- also die zur Kante gehörige Spalte in der Strukturmatrix.)
         
-        # obj == Kante
-        if obj.nummeriert_als(kante):
-            
-            # berechne die Kräfteverteilung auf die Ecken - bzw. die relative Verteilung
-            # (- also die zur Kante gehörige Spalte in der Strukturmatrix.)
-            
-            vec = [list(), list()] # indizes, daten
-            for e in [obj.ecke1, obj.ecke2]:
-                if e.__class__ != statische_ecke:
-                    vec[0].extend([e.nummer * self.dim + i for i in range(self.dim)])
-                    vec[1].extend(e.richtung_von(obj.gib_nachbar(e)))
+        vec = [list(), list()] # indizes, daten
+        for e in [kante.ecke1, kante.ecke2]:
+            if e.__class__ != statische_ecke:
+                vec[0].extend([e.nummer * self.dim + i for i in range(self.dim)])
+                vec[1].extend(e.richtung_von(kante.gib_nachbar(e)))
 
-            # Bringe die Daten direkt in das korrekte Format.
-            (bf_ind, bf_data) = self.struktur_matrix._backfilling(vec[0])
-            vec[0] += bf_ind
-            vec[1] += bf_data
-            
-            if np.shape(vec) != (2, 2 * self.dim):
-                raise Exception("Weird things happened")
-            
-            if len(self.sphäre.kanten_res) != len(self.struktur_matrix.indptr) - 1:
-                raise Exception("Es gibt nicht gleich viele Einträge in 'kanten_res', als es Spalten in der Strukturmatrix gibt.")
-                # Im Folgenden wird angenommen, dass die Länge von kanten_res immer gleich der Anzahl an Spalten in der Strukturmatrix ist.
-     
-     
-            if len(self.sphäre.kanten_res) <= obj.nummer:
-            
-                # erweitere die Plätze für die Kantenkräfte
-                supplement = np.zeros((obj.nummer - len(self.sphäre.kanten_res) + 1,))
-                self.sphäre.kanten_res = np.concatenate((self.sphäre.kanten_res, supplement))
-                
-                # erweitere die Strukturmatrix
-                #   erzeuge leere Matrix der richtigen Form
-                indptr = [i*2*self.dim for i in range(len(supplement) + 1)]
-                indices = [i for i in range(2*self.dim)] * (len(supplement))
-                data = [0] * len(indices)
-                #   schreibe die Kräfteverteilung hinein
-                indices[len(indices)-2*self.dim : len(indices)] = vec[0]
-                data[len(indices)-2*self.dim : len(indices)] = vec[1]
-                
-                #   hänge die Matrix an die Strukturmatrix an.
-                self.struktur_matrix.append((data, indices, indptr), fast=True)
-
-            else:
-                # Ich kann leider nicht sagen, wie sinnvoll es ist diese Warnung nicht zu werfen. Werfen wir sie nicht, ist die inkludiere-Funktion 
-                # vielseitiger einsetzbar.
-                #if self.sphäre.kanten_res[obj.nummer] != 0:
-                #    msg.warning("Der Speicherplatz auf den die neue Kante zugreift war ungleich 0.")
-                
-                # trage die Kräfteverteilung in die Strukturmatrix ein.
-                self.struktur_matrix.override((vec[1], vec[0]), obj.nummer)
+        # Bringe die Daten direkt in das korrekte Format.
+        (bf_ind, bf_data) = self.struktur_matrix._backfilling(vec[0])
+        vec[0] += bf_ind
+        vec[1] += bf_data
         
-    def exkludiere(self, obj : nummeriert):
-        """ Gibt alle Plätze in den Arrays und in der Strukturmatrix frei, damit diese neu verwendet werden können. """
-        # obj == Ecke
-        if obj.nummeriert_als(dynamische_ecke):
-            i = [obj.nummer * self.dim + i for i in range(self.dim)]
-            self.sphäre.ecken_ans[i] = [0] * self.dim  
-            self.sphäre.ecken_res[i] = [0] * self.dim
+        if np.shape(vec) != (2, 2 * self.dim):
+            raise Exception("Weird things happened")
+ 
+        if len(self.struktur_matrix.indptr) - 1 <= kante.nummer:
+        
+            # erweitere die Strukturmatrix
+            #   erzeuge leere Matrix der richtigen Form
+            indptr = [i*2*self.dim for i in range(len(supplement) + 1)]
+            indices = [i for i in range(2*self.dim)] * (len(supplement))
+            data = [0] * len(indices)
+            #   schreibe die Kräfteverteilung hinein
+            indices[len(indices)-2*self.dim : len(indices)] = vec[0]
+            data[len(indices)-2*self.dim : len(indices)] = vec[1]
             
-            #if self.ecken_bewege.pop(obj.nummer, None) == None:
-            #    msg.warning("Es wurde eine Ecke exkluiert, von der keine Beweges-Methode bekannt war.")
+            #   hänge die Matrix an die Strukturmatrix an.
+            self.struktur_matrix.append((data, indices, indptr), fast=True)
 
-        # obj == Kante
-        if obj.nummeriert_als(kante):
-            self.sphäre.kanten_res[obj.nummer] = 0
-            self.struktur_matrix.override(([0]*2*self.dim, [i for i in range(2*self.dim)]), obj.nummer) # Diese Zeile ist sehr wichtig.
+        else:
+        
+            # trage die Kräfteverteilung in die Strukturmatrix ein.
+            self.struktur_matrix.override((vec[1], vec[0]), kante.nummer)
+        
+        if len(self.sphäre.kanten_res) != len(self.struktur_matrix.indptr) - 1:
+            raise msg.error("Es gibt nicht gleich viele Einträge in 'kanten_res', als es Spalten in der Strukturmatrix gibt.")
+            # Dies sollte nach der Aufnahme einer Kante stets der fall sein.
+ 
+        
+    def exkludiere_kante(self, kante):
+        """ Gibt alle Plätze in der Strukturmatrix frei, damit diese neu verwendet werden können. """
+        self.struktur_matrix.override(([0]*2*self.dim, [i for i in range(2*self.dim)]), kante.nummer) # Diese Zeile ist sehr wichtig.
 
-    def revidiere(self, obj : nummeriert):
+    def revidiere(self, kante):
         """ verändere die Einträge in der Strukturmatrix, die die Richtungen zu den Ecken einer Kante angeben. """
-        if obj.nummeriert_als(kante):
-            if len(self.sphäre.kanten_res) <= obj.nummer:
+        if kante.nummeriert_als(kante):
+            if len(self.sphäre.kanten_res) <= kante.nummer:
                 raise Exception("Revidierung der Kante innerhalb der Statik ist fehlgeschlagen")
-            self.inkludiere(obj)
+            self.inkludiere_kante(kante)
+        else:
+            raise Exception("Revidierung eines Objektes innerhalb der Statik ist fehlgeschlagen")
     
     def berechne(self):
         """ Funktionsweise:
@@ -139,15 +118,9 @@ class statik:
         dr = erg[0]
         self.sphäre.kanten_res = dr + self.sphäre.kanten_res
         self.sphäre.ecken_res = self.struktur_matrix.dot(self.sphäre.kanten_res) + self.sphäre.ecken_ans 
-            # ecken_res wird in der Update Methode nicht verwendet
         
         #msg.info("Statik Berechnung:\n" +
         #           " Gestoppt bei Iteration: " + str(erg[2]) + "\n" +
         #           " 1-Norm der Abweichung: " + str(erg[3]))
         
-        #msg.info("Anzahl der Kanten mit veränderten resultierenden Kräften: " + str(sum((dr >= 0.05) + (dr <= -0.05))))
-
-        #for i, v in enumerate(abs(self.sphäre.ecken_res) >= 0.001):
-        #    if v == True:
-        #        self.dyn.ecken_bewege.add(self.ecken_bewege[i // self.dim])
-            
+        #msg.info("Anzahl der Kanten mit veränderten resultierenden Kräften: " + str(sum((dr >= 0.05) + (dr <= -0.05))))         
