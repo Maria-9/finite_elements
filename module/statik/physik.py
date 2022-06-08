@@ -4,20 +4,28 @@
         dynamik
         korrektur
 """
+import numpy as np
 
 from .statik import statik
 from .dynamik import dynamik
 from .korrektur import korrektur
-from .sphäre import sphäre
 
 class physik:
     
-    def __init__(self, num_ecken, num_kanten, dim = 2):
-        self.statik = statik(num_ecken, num_kanten, dim)
-        self.dynamik = dynamik()
+    def __init__(self, sphäre, num_ecken, num_kanten, dim = 2):
+        self.statik = statik(sphäre, num_kanten)
+        self.dynamik = dynamik(sphäre)
         self.korrektur = korrektur()
         
-        self.container = container()
+        self.sphäre = sphäre
     
-        """
-        """
+    def berechne(self, zeitänderung):
+    
+        # Berechnung der durch die Erdbeschleunigung und Masse einwirkenden Kräfte auf die Eckpunkte
+        g = np.matrix([0 for i in range(self.sphäre.dim - 1)] + [-10]).T # Erdbeschleunigung
+        self.sphäre.ecken_ans = np.array((g * self.sphäre.ecken_masse).T).reshape((1, -1)).flatten()
+        
+        self.statik.berechne()
+        self.dynamik.berechne(zeitänderung)
+        
+        # korrektur

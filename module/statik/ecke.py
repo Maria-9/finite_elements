@@ -4,10 +4,11 @@
 import numpy as np
 from .nummeriert import nummeriert
 from matplotlib import path
-from abc import ABC, abstactmethod
+import abc
+from abc import ABC
 #from .sphäre import sphäre
 
-class ecke(nummeriert):
+class ecke(nummeriert, ABC):
 
     # __slots__ = ['nummer', 'dynamisch', 'position', 'ansetzende_kraft', 'resultierende_kraft', 'masse', kanten']
     

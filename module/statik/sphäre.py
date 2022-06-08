@@ -3,6 +3,10 @@
     von einzelnen Aufgabenbereichen benötigt werden, sind in den für sie vorgesehenen Klassenobjekten vorhanden. 
 """
 import numpy as np
+from .nummeriert import nummeriert
+from .dynamische_ecke import dynamische_ecke
+from .statische_ecke import statische_ecke
+from .kante import kante
 from .physik import physik
 
 class sphäre:
@@ -30,16 +34,16 @@ class sphäre:
         self.kanten_natürliche_länge = np.zeros(num_kanten)
         self.kanten_elastizitätsmodul = np.zeros(num_kanten)
         self.kanten_real = np.zeros(num_kanten)               # Die durch Dehnung/Stauchung entstehende Kraft.
-        self.kanten_kraft_limit = np.zeros(num_kanten * 2)    # VORSICHT: [Zug-Limit, Druck-Limit]
+        self.kanten_kraft_limit = np.zeros(num_kanten * 2)    # VORSICHT: [Zug-Limit, Druck-Limit] = [-a, b] für a, b > 0
 
         
-        self.physik = physik()
+        self.physik = physik(self, num_ecken, num_kanten)
     
     def inkludiere(self, obj : nummeriert):
     
         if obj.nummeriert_als(kante):
             self.__inkludiere_kante(obj)
-            self.physik.statik.inkludiere(obj)
+            self.physik.statik.inkludiere_kante(obj)
         
         elif obj.nummeriert_als(dynamische_ecke):
             self.__inkludiere_dyn_ecke(obj)
@@ -66,7 +70,7 @@ class sphäre:
             # self.ecken_beschleunigung = erweitere(self.ecken_beschleunigung)
             
             supplement = np.zeros(dyn_ecke.nummer + 1 - len(self.ecken_masse))
-            self.ecken_masse = np.concatenate(self.ecken_masse, supplement)
+            self.ecken_masse = np.concatenate((self.ecken_masse, supplement))
 
         # prüfe ob der Speicherplatz anderweitig noch in Verwendung ist.
         else:
@@ -80,19 +84,19 @@ class sphäre:
         # stelle sicher, dass genug Speicherplatz für die Positionen der Ecke vorhanden ist.
         if len(self.stat_ecken_pos) < (stat_ecke.nummer + 1) * self.dim:
 
-            supplement = np.zeros(((dyn_ecke.nummer+1)*self.dim - len(self.ecken_ans),))
+            supplement = np.zeros((stat_ecke.nummer+1)*self.dim - len(self.stat_ecken_pos))
             self.stat_ecken_pos = np.concatenate((self.stat_ecken_pos, supplement))
 
         # prüfe ob der Speicherplatz anderweitig noch in Verwendung ist.
         else:
             if (np.array(self.stat_ecken_pos[stat_ecke.nummer*self.dim : (stat_ecke.nummer+1)*self.dim]) != [0]*self.dim).any():
-                msg.warning("Der Speicherplatz auf den die neu inkludierte statische Ecke mit Nummer " + str(dyn_ecke.nummer) + " zugreift war ungleich 0.")
+                msg.warning("Der Speicherplatz auf den die neu inkludierte statische Ecke mit Nummer " + str(stat_ecke.nummer) + " zugreift war ungleich 0.")
 
     def __inkludiere_kante(self, kante):
     
-        if len(self.kanten_res) <= obj.nummer:
+        if len(self.kanten_res) <= kante.nummer:
             # erweitere die Plätze für die Kantenkräfte
-            supplement = np.zeros((obj.nummer - len(self.kanten_res) + 1,))
+            supplement = np.zeros(kante.nummer - len(self.kanten_res) + 1)
             
             for attr in ['kanten_res', 'kanten_natürliche_länge', 'kanten_elastizitätsmodul', 'kanten_real']:
                 setattr(self, attr, np.concatenate((getattr(self, attr), supplement)))
@@ -128,7 +132,7 @@ class sphäre:
     def __exkludiere_kante(self, kante):
     
         for attr in [self.kanten_res, self.kanten_natürliche_länge, self.kanten_elastizitätsmodul, self.kanten_real]:
-            attr[obj.nummer] = 0
+            attr[kante.nummer] = 0
         
         self.kanten_kraft_limit[2*kante.nummer : 2*(kante.nummer + 1)] = [0, 0]
 

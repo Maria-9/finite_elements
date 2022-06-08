@@ -9,24 +9,27 @@ import math
 
 class kante(nummeriert):
 
-    def __init__(self, sphäre, ecke1, ecke2, länge, kraft_limit=0.5, elastizitätsmodul = 10000):
+    def __init__(self, sphäre, ecke1, ecke2, länge = "DEFAULT", kraft_limit=15, elastizitätsmodul = 10000):
         
         super().__init__()
+        
+        self.ecke1 = ecke1      # Diese Informationen werden vorerst weiter in der Kante gespeichert, ev. kann man sie in die Sphäre auslagen.
+        self.ecke2 = ecke2
+        self.ecke1.neue_kante(self)
+        self.ecke2.neue_kante(self)
+        
+        self.sphäre = sphäre
         self.sphäre.inkludiere(self)
         
+        if länge == "DEFAULT":
+            länge = np.linalg.norm(ecke1.position - ecke2.position)
+        
         self.sphäre.kanten_natürliche_länge[self.nummer] = länge
-        self.sphäre.kanten_kraft_limit[self.nummer] = kraft_limit
+        self.sphäre.kanten_kraft_limit[2*self.nummer : 2*(self.nummer + 1)] = [-kraft_limit, kraft_limit] # Die Grenzen für einwirkende Kräfte
         self.sphäre.kanten_elastizitätsmodul[self.nummer] = elastizitätsmodul
         self.sphäre.kanten_real[self.nummer] = 0  
                                 # diese Kraft wird für die Berechnung der Dynamik benötigt. Sie errechnet sich aus der durch die Stauchung oder 
                                 # Dehnung der Kante entstehenden Kraft auf die Eckpunkte der Kante.
-
-        self.ecke1 = ecke1      # Diese Informationen werden vorerst weiter in der Kante gespeichert, ev. kann man sie in die Sphäre auslagen.
-        self.ecke2 = ecke2
-
-        self.ecke1.neue_kante(self)
-        self.ecke2.neue_kante(self)
-
     
     def gib_nachbar(self, ecke):
         if ecke is self.ecke1:
@@ -51,7 +54,7 @@ class kante(nummeriert):
     
     @property
     def kraft_limit(self):
-        return self.sphäre.kanten_kraft_limit[self.nummer]
+        return self.sphäre.kanten_kraft_limit[2*self.nummer : 2*(self.nummer + 1)]
     
     def delete(self, *objects):
         msg.info("kante.delete wurde aufgerufen. Die Kantennummer ist " + str(self.nummer))

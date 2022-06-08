@@ -38,7 +38,6 @@ class p_dynamische_ecke(dynamische_ecke, p_ecke):
         dynamische_ecke.__init__(self, position, *args)
         # Da 'p_ecke' lediglich den Konstruktor von 'ecke' verwendet, der wiederum von der dynamischen_ecke aufgerufen wird,
         # kann,sollte und wird auf den Konstruktor von 'p_ecke' verzichtet.
-        print(self)
     
     def verts_codes_color(self):
         """ Gibt die Vertexe und Kodes für das plotten mit Matplotlib zurück."""
@@ -50,8 +49,8 @@ class p_dynamische_ecke(dynamische_ecke, p_ecke):
         kraft = self.res_kraft
         norm = np.linalg.norm(kraft)
         #print(norm)
-        länge_pfeil = 0.7 * norm * 10
-        if  True:
+        länge_pfeil = 0.7 * norm 
+        if  norm > 0.01:
             scal = kraft/norm
             verts.append(self.position)
             verts.append(self.position + scal * länge_pfeil)
@@ -85,10 +84,10 @@ class p_statische_ecke(statische_ecke, p_ecke):
 class p_kante(kante):
     __class__ = kante
     
-    def __init__(self, ecke1, ecke2, statik, dynamik, darstellung = 0):
+    def __init__(self, sphäre, ecke1, ecke2, länge = "DEFAULT", darstellung = 0):
         """ darstellung = 0 zeichnet die Linie mittig, höhere Darstellungen zeichnen die Linie neben die Mittellinie."""
         self.darstellung = darstellung
-        super().__init__(ecke1, ecke2, statik, dynamik)
+        super().__init__(sphäre, ecke1, ecke2, länge)
 
     def verts_codes_color(self):
         """ Gibt die Vertexe und Kodes für das plotten mit Matplotlib zurück."""
@@ -106,10 +105,10 @@ class p_kante(kante):
         color = [0, 0, 0] # RGB
         kraft = self.res_kraft
         if kraft > 0:
-            color[0] = min(1, kraft / self.kraft_limit)
+            color[0] = min(1, np.sqrt(kraft / self.kraft_limit[1]))
         else:
-            color[2] = min(1, -kraft / self.kraft_limit)
-            if kraft < -self.kraft_limit:
+            color[2] = min(1, np.sqrt(kraft / self.kraft_limit[0]))
+            if kraft < self.kraft_limit[0]:
                 color[1] = 1
         
         return (verts, codes, color)

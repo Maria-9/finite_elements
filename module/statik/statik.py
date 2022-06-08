@@ -26,8 +26,8 @@ class statik:
         berechne()                      -> Berechnet die resultierende Kräfteverteilung, gegeben den ansetzenden Kräften.
     """
     
-    def __init__(self, sphäre):
-        self.dim = self.sphäre.dim                     # die Dimension in der sich die Statik bewegt.
+    def __init__(self, sphäre, num_kanten):
+        self.dim = sphäre.dim                     # die Dimension in der sich die Statik bewegt.
         
         self.sphäre = sphäre
             # Es wird zugegriffen auf:
@@ -36,7 +36,7 @@ class statik:
             # sphäre.kanten_res                        # die an den Kanten resultierenden Kräfte k_r = S^(-1) * e_a
         
                   
-        self.struktur_matrix = row_limited_csc.empty(2*self.dim, len(self.sphäre.kanten_res), dtype=float)      # die Strukturmatrix S.
+        self.struktur_matrix = row_limited_csc.empty(2*self.dim, num_kanten, dtype=float)      # die Strukturmatrix S.
   
     def inkludiere_kante(self, kante):
         """ Setzt alle Parameter im Statik-Objekt um die Kante 'kante' in Zukunft in die Berechnung der Statik mit einzubinden."""
@@ -62,8 +62,8 @@ class statik:
         
             # erweitere die Strukturmatrix
             #   erzeuge leere Matrix der richtigen Form
-            indptr = [i*2*self.dim for i in range(len(supplement) + 1)]
-            indices = [i for i in range(2*self.dim)] * (len(supplement))
+            indptr = [i*2*self.dim for i in range(kante.nummer - len(self.struktur_matrix.indptr) + 3)]
+            indices = [i for i in range(2*self.dim)] * (kante.nummer - len(self.struktur_matrix.indptr) + 2)
             data = [0] * len(indices)
             #   schreibe die Kräfteverteilung hinein
             indices[len(indices)-2*self.dim : len(indices)] = vec[0]
