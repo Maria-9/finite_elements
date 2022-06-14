@@ -136,7 +136,7 @@ class universum1:
             for obj in [self.ecken, self.st_ecken, self.kanten]:
                 self.mplot.add(obj)
             
-            self.mplot.draw(intervall=0.001)
+            self.mplot.draw(intervall=0.0001)
             
             t_neu = time.time()
             delta = t_neu - t

@@ -2,7 +2,13 @@
 """ Die geniale Erfindung der Korrektur. """
 
 class korrektur:
-	pass
+    
+    def __init__(self, sphäre):
+        self.sphäre = sphäre
+        
+    def korrigiere(self):
+        längen = self.sphäre.natürliche_länge / ((self.sphäre.kanten_res**2 / (self.sphäre.elastizitätsmodul + self.sphäre.natürliche_länge)) + 1)
+        
     
     
     

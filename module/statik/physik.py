@@ -26,6 +26,7 @@ class physik:
         self.sphäre.ecken_ans = np.array((g * self.sphäre.ecken_masse).T).reshape((1, -1)).flatten()
         
         self.statik.berechne()
-        self.dynamik.berechne(zeitänderung)
+        ecken = self.dynamik.berechne(zeitänderung)
+        self.statik.revidiere(ecken)
         
         # korrektur

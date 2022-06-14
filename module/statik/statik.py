@@ -86,14 +86,16 @@ class statik:
         """ Gibt alle Plätze in der Strukturmatrix frei, damit diese neu verwendet werden können. """
         self.struktur_matrix.override(([0]*2*self.dim, [i for i in range(2*self.dim)]), kante.nummer) # Diese Zeile ist sehr wichtig.
 
-    def revidiere(self, kante):
+    def revidiere(self, ecken):
         """ verändere die Einträge in der Strukturmatrix, die die Richtungen zu den Ecken einer Kante angeben. """
-        if kante.nummeriert_als(kante):
-            if len(self.sphäre.kanten_res) <= kante.nummer:
-                raise Exception("Revidierung der Kante innerhalb der Statik ist fehlgeschlagen")
-            self.inkludiere_kante(kante)
-        else:
-            raise Exception("Revidierung eines Objektes innerhalb der Statik ist fehlgeschlagen")
+        kanten = set()
+        for e in ecken:
+            kanten.update(e.kanten)
+    
+        for k in kanten:
+            if len(self.sphäre.kanten_res) <= k.nummer:
+                raise Exception("Revidierung der Kante innerhalb der Statik ist fehlgeschlagen.")
+            self.inkludiere_kante(k)
     
     def berechne(self):
         """ Funktionsweise:

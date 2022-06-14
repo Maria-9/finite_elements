@@ -10,7 +10,7 @@ from .kante import kante
 from .physik import physik
 
 class sphäre:
-    
+
     def __init__(self, num_ecken, num_kanten):
         """ num_ecken : Die Anzahl der dynamischen Ecken. """
         self.dim = 2
@@ -77,6 +77,8 @@ class sphäre:
             for array in [self.ecken_ans, self.ecken_res, self.ecken_pos, self.ecken_geschwindigkeit, self.ecken_beschleunigung]:
                 if (np.array(array[dyn_ecke.nummer*self.dim : (dyn_ecke.nummer+1)*self.dim]) != [0]*self.dim).any():
                     msg.warning("Der Speicherplatz auf den die neu inkludierte Ecke mit Nummer " + str(dyn_ecke.nummer) + " zugreift war ungleich 0.")
+                    
+        self.dynamische_ecken[dyn_ecke.nummer] = dyn_ecke
 
     def __inkludiere_stat_ecke(self, stat_ecke):
         """ inkludiere eine statische Ecke """
@@ -91,6 +93,8 @@ class sphäre:
         else:
             if (np.array(self.stat_ecken_pos[stat_ecke.nummer*self.dim : (stat_ecke.nummer+1)*self.dim]) != [0]*self.dim).any():
                 msg.warning("Der Speicherplatz auf den die neu inkludierte statische Ecke mit Nummer " + str(stat_ecke.nummer) + " zugreift war ungleich 0.")
+        
+        self.statische_ecken[stat_ecke.nummer] = stat_ecke
 
     def __inkludiere_kante(self, kante):
     
@@ -105,6 +109,8 @@ class sphäre:
         
         elif self.kanten_res[kante.nummer] != 0 or self.kanten_elastizitätsmodul[kante.nummer] != 0:
             msg.warning("Der Speicherplatz auf den die neue Kante mit Nummer " + str(kante.nummer) + " zugreift war ungleich 0.")
+        
+        self.kanten[kante.nummer] = kante
 
     def exkludiere(self, obj : nummeriert):
 
@@ -120,6 +126,8 @@ class sphäre:
     
     def __exkludiere_stat_ecke(self, stat_ecke):
         self.stat_ecken_pos[stat_ecke.nummer : (stat_ecke.nummer + 1) * self.dim] = [0] * self.dim
+        
+        del self.statische_ecken[stat_ecke.nummer]
     
     def __exkludiere_dyn_ecke(self, dyn_ecke):
         i = [dyn_ecke.nummer * self.dim + i for i in range(self.dim)]
@@ -128,6 +136,8 @@ class sphäre:
             attr[i] = [0] * self.dim
             
         self.ecken_masse[dyn_ecke.nummer] = 0
+        
+        del self.dynamische_ecken[dyn_ecke.nummer]
     
     def __exkludiere_kante(self, kante):
     
@@ -135,6 +145,8 @@ class sphäre:
             attr[kante.nummer] = 0
         
         self.kanten_kraft_limit[2*kante.nummer : 2*(kante.nummer + 1)] = [0, 0]
+        
+        del self.kanten[kante.nummer]
 
 
 
