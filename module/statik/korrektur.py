@@ -1,13 +1,96 @@
 
 """ Die geniale Erfindung der Korrektur. """
 
+import scipy.sparse as ss
+
 class korrektur:
     
-    def __init__(self, sphäre):
+    """
+    Wir lösen das Minimierungsproblem
+            sum_{i<j} { (e_i - e_j)^T (e_i - e_j) - p_ij }^2
+    wobei p_ij die gewünschte Länge der Kanten ist.
+    
+    Ich gehe davon aus, dass während der Simulation keine statischen Ecken hinzukommen.
+    Dann lassen sich die statischen Ecken in der Strukturmatrix links neben die dynamischen Ecken schreiben, ohne dass die Sortierung verloren geht.
+    """
+    def __init__(self, sphäre, num_kanten, num_stat_ecken, num_dyn_ecken):
         self.sphäre = sphäre
         
+        self.num_stat_ecken = num_stat_ecken
+        
+        self.strukturmatrix = ss.dok_matrix((num_kanten, num_stat_ecken + num_dyn_ecken))
+
+    def index(self, ecke):
+        if ecke.nummeriert_als(statische_ecke):
+            return ecke.nummer
+        return ecke.nummer + self.num_stat_ecken
+   
+    def übernehme(self, kante):
+    
+        # Schritt 1: passe die Shape der Matrix an.
+        # (Ich verstehe nicht ganz, weshalb scipy so ein Bums aus der korrekten Shape macht, das zieht nur unnötig viel Code mit sich)
+    
+        (zeilen, spalten) = self.strukturmatrix.get_shape()
+        
+        for ecke in [kante.ecke1, kante.ecke2]:
+            
+            # Man bedenke, dass niemals beide Ecken statische Ecken sein sollten.
+            if kante.ecke.nummeriert_als(statische_ecke) and ecke.nummer >= self.num_stat_ecken:
+                # Vorsicht! Hier wirds ineffizient
+                self.erweitere_strukturmatrix_stat_ecke(ecke)
+            
+            if kante.ecke.nummeriert_als(dynamische_ecke) and ecke.nummer + self.num_stat_ecken >= spalten
+                spalten = ecke.nummer + self.num_stat_ecken + 1
+        
+        if kante.nummer >= zeilen:
+            zeilen = kante.nummer + 1
+        
+        if (zeilen, spalten) != self.strukturmatrix.get_shape():
+            self.strukturmatrix.resize(zeilen, spalten)
+            
+        # Schritt 2: Übernehme die Kante in die Matrix
+        self.strukturmatrix[kante.nummer, self.index(kante.ecke1)] = 1
+        self.strukturmatrix[kante.nummer, self.index(kante.ecke2)] = -1
+    
+    
+    def erweitere_strukturmatrix_stat_ecke(self, ecke):
+        diff = - self.num_stat_ecken + ecke.nummer + 1
+        
+        (zeilen, spalten) = self.strukturmatrix.get_shape()
+        strukturmatrix = ss.dok_matrix((zeilen, spalten + diff))
+        
+        for (i, j) in self.strukturmatrix.keys():
+            if j < self.num_stat_ecken:     # es handelt sich um die Spalte einer statischen Ecke
+                strukturmatrix[i, j] = self.strukturmatrix[i, j]
+            else:                           # es handelt sich um die Spalte einer dynamischen Ecke
+                strukturmatrix[i, j + diff] = self.strukturmatrix[i, j]
+                
+    
+        self.num_stat_ecken = ecke.nummer + 1
+        self.strukturmatrix = strukturmatrix
+        
     def korrigiere(self):
-        längen = self.sphäre.natürliche_länge / ((self.sphäre.kanten_res**2 / (self.sphäre.elastizitätsmodul + self.sphäre.natürliche_länge)) + 1)
+        berechne_gewünschte_länge()
+        
+    
+    def berechne_gewünschte_länge(self):
+        self.längen = self.sphäre.natürliche_länge / ((self.sphäre.kanten_res**2 / (self.sphäre.elastizitätsmodul + self.sphäre.natürliche_länge)) + 1)
+    
+    def objective(self):
+        
+        # berechne die Differenzen
+        l = len(self.sphäre.stat_ecken_pos) + len(self.sphäre.ecken_pos)
+        pos = np.concatenate((self.sphäre.stat_ecken_pos, self.sphäre.ecken_pos)).reshape((l / 3, 3))
+        diff = self.strukturmatrix.dot(pos)         # Matrixprodukt
+        diff = diff.multiply(diff)                  # Punktweise Multiplikation
+        diff.sum(1)                                 # Summe über die Zeilen
+        d = diff - self.längen * self.längen        # Differenz der Quadrate der tatsächlichen und gewünschten Längen
+        obj = (d*d).sum()                           # Bilde Least Squares
+        
+        return obj
+        
+        
+        
         
     
     
