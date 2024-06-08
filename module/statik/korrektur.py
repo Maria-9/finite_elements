@@ -39,7 +39,7 @@ class korrektur:
                 # Vorsicht! Hier wirds ineffizient
                 self.erweitere_strukturmatrix_stat_ecke(ecke)
             
-            if kante.ecke.nummeriert_als(dynamische_ecke) and ecke.nummer + self.num_stat_ecken >= spalten
+            if kante.ecke.nummeriert_als(dynamische_ecke) and ecke.nummer + self.num_stat_ecken >= spalten:
                 spalten = ecke.nummer + self.num_stat_ecken + 1
         
         if kante.nummer >= zeilen:

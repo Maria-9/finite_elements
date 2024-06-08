@@ -15,7 +15,7 @@ class physik:
     def __init__(self, sphäre, num_ecken, num_kanten, dim = 2):
         self.statik = statik(sphäre, num_kanten)
         self.dynamik = dynamik(sphäre)
-        self.korrektur = korrektur()
+        # self.korrektur = korrektur(...)
         
         self.sphäre = sphäre
     
